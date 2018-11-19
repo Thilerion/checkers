@@ -1,4 +1,4 @@
-import { PLAYER_BLACK, PLAYER_WHITE, RULES, PIECE_KING, PIECE_MAN, EMPTY_CELL, PIECES } from './constants.js';
+import { PLAYER_BLACK, PLAYER_WHITE, RULES, PIECE_KING, PIECE_MAN, EMPTY_CELL, PIECES, CELL_TYPES } from './constants.js';
 import { coordsToIndex, indexToCoords } from './util-fns.js';
 
 class Checkers {
@@ -37,9 +37,14 @@ class Board {
 		return indexToCoords(index, this.size);
 	}
 
+	getCellType(x, y) {
+		if ((x + y) % 2 === 0) return CELL_TYPES.white;
+		return CELL_TYPES.black;
+	}
+
 	initialFill() {
 		let arr = this.grid;
-		let rowsPerPlayer = (this.size / 2) - 2;
+		let rowsPerPlayer = (this.size / 2) - 1;
 
 		for (let i = 0; i < this.size; i++) {
 			for (let j = 0; j < this.size; j++) {
