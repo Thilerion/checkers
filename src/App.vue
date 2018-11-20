@@ -53,7 +53,8 @@ export default {
 	},
 	mounted() {
 		// this.game.board.import('0b0b-bbbb-b000-0bbb-w0w0-w0w0-wwww-wwww');
-		
+		this.game.gameBoard.removePiece(2, 1);
+		console.log(this.game.gameBoard.getPossibleMoves(1, 2));
 	}
 };
 </script>

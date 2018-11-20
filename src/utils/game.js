@@ -88,11 +88,26 @@ class Board {
 		}).map(dir => {
 			let type = this.getPieceAt(x, y);
 			let forward = true;
-			if (type === PIECES.manWhite && dir.dy < 0) forward = false;
-			else if (type === PIECES.manBlack && dir.dy > 0) forward = false;
+			if (type === PIECES.manWhite && dir.dy > 0) forward = false;
+			else if (type === PIECES.manBlack && dir.dy < 0) forward = false;
 
 			return { ...dir, forward };
 		})
+	}
+
+	getPossibleMoves(x, y) {
+		return this.getValidDirections(x, y).reduce((acc, dir) => {
+			let x1 = dir.dx + x;
+			let y1 = dir.dy + y;
+			let getSquare = this.getPieceAt(x1, y1);
+
+			let newDir = {};
+			if (!getSquare) {
+				newDir = { ...dir, x0: x, y0: y, x1, y1 };
+				acc.push(newDir);
+			}
+			return acc;
+		}, []);
 	}
 
 	makeMove(x0, y0, x1, y1) {
