@@ -19,7 +19,6 @@ import {PIECES, SQUARE_TYPES} from './utils/constants.js';
 
 import SquareComponent from './components/Square.vue';
 import PieceComponent from './components/Piece.vue';
-import { setTimeout } from 'timers';
 
 export default {
 	name: "app",
@@ -62,7 +61,11 @@ export default {
 		this.game.gameBoard.setPiece(1, 2, 1);
 		// console.log({ moves: this.game.gameBoard.getPossibleMoves(2, 3)});
 		// console.log({ hits: this.game.gameBoard.getPossibleHits(2, 3)});
-		console.log(this.game.gameBoard.getHitsOrMoves(2, 3));
+		let piece56 = this.game.gameBoard.getHitsOrMoves(5, 6); //one move
+		let piece14 = this.game.gameBoard.getHitsOrMoves(1, 4); //one move
+		let piece21 = this.game.gameBoard.getHitsOrMoves(2, 1); //one hit
+
+		console.log({piece56, piece14, piece21});
 	}
 };
 </script>

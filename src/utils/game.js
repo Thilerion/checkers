@@ -74,6 +74,11 @@ class Board {
 		return this.board[y][x];
 	}
 
+	getPiecePlayer(piece) {
+		if (piece < 0) return PLAYER_BLACK;
+		return PLAYER_WHITE;
+	}
+
 	isValidSquare(x, y) {
 		return (x >= 0 && x < this.size) && (y >= 0 && y < this.size) && ((x + y) % 2 === 1);
 	}
@@ -111,12 +116,14 @@ class Board {
 	}
 
 	getPossibleHits(x, y) {
+		let myPiece = this.getPieceAt(x, y);
+
 		return this.getValidDirections(x, y).reduce((acc, dir) => {
 			let x1 = dir.dx + x;
 			let y1 = dir.dy + y;
 			let squareToCapture = this.getPieceAt(x1, y1);
 
-			if (squareToCapture) {
+			if (squareToCapture && this.getPiecePlayer(myPiece) !== this.getPiecePlayer(squareToCapture)) {
 				let x2 = dir.dx + x1;
 				let y2 = dir.dy + y1;
 
@@ -142,18 +149,14 @@ class Board {
 		let sequences = hits.map(hit => {
 			board.makeMove(hit.x0, hit.y0, hit.x1, hit.y1);
 
-			let sequences = JSON.parse(JSON.stringify(board.recursiveHitSequences(hit.x1, hit.y1)));
+			let curSeqs = JSON.parse(JSON.stringify(board.recursiveHitSequences(hit.x1, hit.y1)));
 
 			board.undoMove();
-
-			return {
-				x: hit.x0,
-				y: hit.y0,
-				sequences
-			}
+			// console.log({ firstMove: {x: hit.x1, y: hit.y1}, curSeqs });
+			return { firstMove: {x: hit.x1, y: hit.y1}, steps: curSeqs };
 		})
 
-		console.log("Returning all sequences at the start: ", sequences);
+		// console.log("Returning all sequences at the start: ", sequences);
 
 		return sequences;
 	}
@@ -167,7 +170,7 @@ class Board {
 				if (move.capture) caps.push(JSON.parse(JSON.stringify(move.capture)));
 				return caps;
 			}, []);
-			console.log("Returning captures at end of chain: ", captures);
+			// console.log("Returning captures at end of chain: ", captures);
 			return [captures];
 		}
 
@@ -183,7 +186,7 @@ class Board {
 			this.undoMove();
 		}
 
-		console.log("Returning sequences in middle of chain: ", sequences);
+		// console.log("Returning sequences in middle of chain: ", sequences);
 		return sequences;
 	}
 
