@@ -80,8 +80,28 @@ class Checkerboard {
 
 	getValidMovesFor(x, y) {
 		let piece = this.getPieceAt(x, y);
-		let dirs = this.getValidDirsFor(piece).filter(d => d.forward).filter(d => !this.getPieceAt(d.x, d.y));
-		return dirs;
+		let dirs = this.getValidDirsFor(piece);
+
+		// check if piece on dir
+		// 		yes: enemy piece? check for hit, else nothing
+		//		no: possible move
+		let moves = [], hits = [];
+
+		for (let i = 0; i < dirs.length; i++) {
+			let dir = dirs[i];
+
+			let movePiece = this.getPieceAt(dir.x, dir.y);
+
+			if (!movePiece && dir.forward) {
+				// empty square, and the direction is forward, so possible move
+				moves.push(dir);
+			} else if (movePiece && movePiece.playerId !== piece.playerId) {
+				// square has an opponent's piece, so maybe a hit direction
+				// TODO: check hits recursive
+			}
+		}
+
+		return {moves, hits};
 	}
 }
 
