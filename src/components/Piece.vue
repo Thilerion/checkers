@@ -1,22 +1,24 @@
 <template>
-	<div class="piece" :class="[typeClass, playerClass]" v-if="piece">
-		<span class="crown" v-if="typeClass === 'king'">👑</span>
+	<div class="piece" :class="[pieceColor, {'crown': isKing}]" v-if="piece">
+		<span v-if="isKing" class="crown">👑</span>
 	</div>
 </template>
 
 <script>
-import {PLAYER_BLACK, PLAYER_WHITE, PIECE_KING, PIECE_MAN} from '../utils/constants.js';
+import {PIECES} from '../utils/constants.js';
 
 export default {
 	props: ['piece'],
 	computed: {
-		typeClass() {
-			if (this.piece.type === PIECE_KING) return 'king';
-			return 'man';
+		pieceColor() {
+			if (this.piece < 0) {
+				return 'black';
+			} else return 'white';
 		},
-		playerClass() {
-			if (this.piece.playerId === PLAYER_BLACK) return 'black';
-			return 'white';
+
+		isKing() {
+			if (Math.abs(this.piece) === 2) return true;
+			return false;
 		}
 	}
 }

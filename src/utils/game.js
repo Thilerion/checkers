@@ -16,19 +16,119 @@ class Checkers {
 		this.captureBack = captureBack;
 		this.flyingKings = flyingKings;
 
-		this.board = new Checkerboard(this.size);
+		this.checkerBoard = new Grid(this.size);
+		this.gameBoard = new Board(this.size).createBoard().addInitialPieces();
 
 		this.currentPlayer = this.firstMove;
 	}
 }
 
-class Checkerboard {
+class Board {
+	constructor(size) {
+		this.size = size;
+		this.board = [];
+
+		this.history = [];
+	}
+
+	static copy(oldBoard) {
+		let newBoard = new Board(oldBoard.size);
+		newBoard.board = JSON.parse(JSON.stringify(oldBoard.board));
+		return newBoard;
+	}
+
+	createBoard() {
+		this.board = Array(this.size).fill(null).map(row => Array(this.size).fill(0));
+		return this;
+	}
+
+	addInitialPieces() {
+		let rowsPerPlayer = (this.size / 2) - 1;
+		let piecesPerRow = this.size / 2;
+
+		for (let i = 0; i < rowsPerPlayer; i++) {
+			for (let j = 0; j < piecesPerRow; j++) {
+				if (i % 2 === 0) {
+					this.board[i].splice(j * 2 + 1, 1, PIECES.manBlack);
+					this.board[this.size - i - 1].splice(j * 2, 1, PIECES.manWhite);
+				} else {
+					this.board[i].splice(j * 2, 1, PIECES.manBlack);
+					this.board[this.size - i - 1].splice(j * 2 + 1, 1, PIECES.manWhite);
+				}
+			}
+		}
+		return this;
+	}
+
+	removePiece(x, y) {
+		let piece = this.getPieceAt(x, y);
+		this.board[y].splice(x, 1, NO_PIECE);
+		return piece;
+	}
+
+	setPiece(x, y, piece) {
+		this.board[y].splice(x, 1, piece);
+	}
+
+	getPieceAt(x, y) {
+		return this.board[y][x];
+	}
+
+	makeMove(x0, y0, x1, y1) {
+		let dx = x1 - x0;
+		let dy = y1 - y0;
+
+		let move = { x0, x1, y0, y1, capture: null };
+
+		if (Math.abs(dx) > 1 && Math.abs(dy) > 1) {
+			move.capture = { x: x0 + dx, y: y0 + dx, type: null};
+			move.capture.type = this.getPieceAt(move.capture.x, move.capture.y);
+			this.removePiece(move.capture.x, move.capture.y);
+		}
+
+		let movedPiece = this.removePiece(x0, y0);
+		this.setPiece(x1, y1, movedPiece);
+
+		this.history.push(move);
+		return this;
+	}
+
+	undoMove() {
+		let move = this.history.pop();
+
+		let movedPiece = this.removePiece(move.x1, move.y1);
+		this.setPiece(move.x0, move.x1, movedPiece);
+
+		if (!!move.capture) {
+			this.setPiece(move.capture.x, move.capture.y, move.capture.type);
+		}
+
+		return this;
+	}
+}
+
+class Grid {
 	constructor(size) {
 		this.size = size;
 		this.grid = this.createEmpty(this.size);
-		this.pieces = this.addPieces();
 	}
 
+	createEmpty(size) {
+		let arr = [];
+		
+		for (let i = 0; i < size; i++) {
+			let row = [];
+			for (let j = 0; j < size; j++) {
+				if ((i + j) % 2 === 0) row.push(new Square(j, i, SQUARE_TYPES.white));
+				else row.push(new Square(j, i, SQUARE_TYPES.black));
+			}
+			arr.push(row);
+		}
+		return arr;
+	}
+}
+
+class GridOLD {
 	import(str) {
 		// w and W for white man and king
 		// b and B for black man and king
@@ -85,20 +185,6 @@ class Checkerboard {
 		}
 		
 		return arr.map(row => row.join('')).join('-');
-	}
-
-	createEmpty(size) {
-		let arr = [];
-		
-		for (let i = 0; i < size; i++) {
-			let row = [];
-			for (let j = 0; j < size; j++) {
-				if ((i + j) % 2 === 0) row.push(new Square(j, i, SQUARE_TYPES.white));
-				else row.push(new Square(j, i, SQUARE_TYPES.black));
-			}
-			arr.push(row);
-		}
-		return arr;
 	}
 
 	addPieces() {
@@ -249,6 +335,12 @@ class Piece {
 		this.x = x;
 		this.y = y;
 		this.type = type;
+
+		if (player === PLAYER_BLACK) {
+			this.pieceId = type === PIECE_MAN ? PIECES.manBlack : PIECES.kingBlack;
+		} else if (player === PLAYER_WHITE) {
+			this.pieceId = type === PIECE_MAN ? PIECES.manWhite : PIECES.kingWhite;
+		}
 
 		this.alive = true;
 	}
