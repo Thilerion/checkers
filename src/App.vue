@@ -49,6 +49,8 @@ export default {
 	},
 	mounted() {
 		this.game.board.import('bbbb-bbbb-b00b-0bb0-w0w0-w0w0-wwww-wwww');
+		let x = this.game.board.export();
+		console.log(x);
 	}
 };
 </script>

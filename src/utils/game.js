@@ -54,6 +54,39 @@ class Checkerboard {
 		return this;
 	}
 
+	export() {
+		let pieces = [];
+
+		for (let i = 0; i < this.pieces.length; i++) {
+			let p = this.pieces[i];
+
+			let x = p.x % 2 === 0 ? p.x / 2 : (p.x - 1) / 2;
+			let y = Math.floor(p.y % this.size);
+
+			let char = p.playerId === PLAYER_WHITE ? 'w' : 'b';
+			
+			let typeChar = p.type === PIECE_MAN ? char : char.toUpperCase();
+
+			pieces.push({ ch: typeChar, x, y });
+		}
+
+		pieces.sort((a, b) => {
+			let indexA = (a.y * this.size) + a.x;
+			let indexB = (b.y * this.size) + b.x;
+			return indexA < indexB;
+		});
+
+		let arr = [];
+		for (let i = 0; i < pieces.length; i++) {
+			let p = pieces[i];
+
+			if (!arr[p.y]) arr[p.y] = Array(this.size / 2).fill(0);
+			arr[p.y][p.x] = p.ch;
+		}
+		
+		return arr.map(row => row.join('')).join('-');
+	}
+
 	createEmpty(size) {
 		let arr = [];
 		
