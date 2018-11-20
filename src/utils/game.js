@@ -129,40 +129,61 @@ class Board {
 		}, [])
 	}
 
-	getHitsOrMoves(x, y, mustHit = false) {
+	getHitsOrMoves(x, y) {
 		let hits = this.getPossibleHits(x, y);
 
 		if (hits.length < 1) {
-			if (mustHit) {
-				// return list of all captures
-				let captures = [];
-				for (let i = 0; i < this.history.length; i++) {
-					if (this.history[i].captured) {
-						captures.push(this.history[i].captured);
-					}
-				}
-				return captures;
-			} else {
-				let moves = this.getPossibleMoves(x, y);
-				return moves;
-			}
+			let moves = this.getPossibleMoves(x, y);
+			return moves;
 		}
 
-		let board = this;
-		if (!mustHit) {
-			board = Board.copy(this);
+		let board = Board.copy(this);
+
+		let sequences = hits.map(hit => {
+			board.makeMove(hit.x0, hit.y0, hit.x1, hit.y1);
+
+			let sequences = JSON.parse(JSON.stringify(board.recursiveHitSequences(hit.x1, hit.y1)));
+
+			board.undoMove();
+
+			return {
+				x: hit.x0,
+				y: hit.y0,
+				sequences
+			}
+		})
+
+		console.log("Returning all sequences at the start: ", sequences);
+
+		return sequences;
+	}
+
+	recursiveHitSequences(x, y) {
+		let hits = this.getPossibleHits(x, y);
+
+		if (hits.length < 1) {
+			// return captures in history
+			let captures = this.history.reduce((caps, move) => {
+				if (move.capture) caps.push(JSON.parse(JSON.stringify(move.capture)));
+				return caps;
+			}, []);
+			console.log("Returning captures at end of chain: ", captures);
+			return [captures];
 		}
 
 		let sequences = [];
-		
 		for (let i = 0; i < hits.length; i++) {
 			let hit = hits[i];
-			board.makeMove(hit.x0, hit.y0, hit.x1, hit.y1);
+			this.makeMove(hit.x0, hit.y0, hit.x1, hit.y1);
 
-			let sequence = JSON.parse(JSON.stringify(board.getHitsOrMoves(hit.x1, hit.y1, true)));
-			sequences.push(sequence);
+			let sequence = JSON.parse(JSON.stringify(this.recursiveHitSequences(hit.x1, hit.y1)));
+
+			sequences.push(...sequence);
+
+			this.undoMove();
 		}
 
+		console.log("Returning sequences in middle of chain: ", sequences);
 		return sequences;
 	}
 
