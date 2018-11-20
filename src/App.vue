@@ -46,6 +46,9 @@ export default {
 		clickPiece(x, y) {
 			console.log(this.game.board.getValidMovesFor(x, y));
 		}
+	},
+	mounted() {
+		this.game.board.import('bbbb-bbbb-b00b-0bb0-w000-w0ww-wwww-wwww');
 	}
 };
 </script>

@@ -6,7 +6,7 @@ const PLAYER_BLACK_MULT = -1;
 const PIECE_MAN = 1;
 const PIECE_KING = 2;
 
-const EMPTY_CELL = " ";
+const NO_PIECE = 0;
 
 const SQUARE_TYPES = {
 	white: 'whiteSquare',
@@ -29,4 +29,4 @@ const PIECES = {
 
 RULES.size = 8;
 
-export { PLAYER_BLACK, PLAYER_WHITE, RULES, PIECE_KING, PIECE_MAN, PIECES, EMPTY_CELL, SQUARE_TYPES };
+export { PLAYER_BLACK, PLAYER_WHITE, RULES, PIECE_KING, PIECE_MAN, PIECES, NO_PIECE, SQUARE_TYPES };

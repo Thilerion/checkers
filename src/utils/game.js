@@ -1,4 +1,4 @@
-import { PLAYER_BLACK, PLAYER_WHITE, RULES, PIECE_KING, PIECE_MAN, EMPTY_CELL, PIECES, SQUARE_TYPES } from './constants.js';
+import { PLAYER_BLACK, PLAYER_WHITE, RULES, PIECE_KING, PIECE_MAN, NO_PIECE, PIECES, SQUARE_TYPES } from './constants.js';
 import { coordsToIndex, indexToCoords } from './util-fns.js';
 
 const DIRECTIONS = [
@@ -27,6 +27,31 @@ class Checkerboard {
 		this.size = size;
 		this.grid = this.createEmpty(this.size);
 		this.pieces = this.addPieces();
+	}
+
+	import(str) {
+		// w and W for white man and king
+		// b and B for black man and king
+		// NO_PIECE === 0 === empty
+		// - is next row
+		this.pieces = [];
+
+		let rows = str.split('-');
+
+		for (let y = 0; y < rows.length; y++) {
+			let row = rows[y];
+			for (let i = 0, x = 1 - (y % 2); i < row.length && x < this.size; i++ , x += 2) {
+				if (row[i] == NO_PIECE) {
+					// double equals for the string > int typecasting
+					continue;
+				}
+
+				let p = row[i].toLowerCase() === 'w' ? PLAYER_WHITE : PLAYER_BLACK;
+				let type = row[i].toLowerCase() === row[i] ? PIECE_MAN : PIECE_KING;
+				this.pieces.push(new Piece(p, x, y, type));
+			}
+		}
+		return this;
 	}
 
 	createEmpty(size) {
