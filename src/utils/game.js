@@ -20,6 +20,27 @@ class Checkers {
 		this.gameBoard = new Board(this.size).createBoard().addInitialPieces();
 
 		this.currentPlayer = this.firstMove;
+
+		this.possibleMoves = [];
+		this.mustHit = false;
+
+		this.initializeMove();
+	}
+
+	initializeMove() {
+		this.possibleMoves = this.gameBoard.getAllHitsOrMoves(this.currentPlayer);
+		return this;
+	}
+
+	finishMove() {
+
+	}
+
+	makeMove(x0, y0, x1, y1) {
+		this.gameBoard.makeMove(x0, y0, x1, y1);
+		this.possibleMoves.filter(move => {
+			return move.x !== x0 && move.y !== y0;
+		});
 	}
 }
 
@@ -68,6 +89,7 @@ class Board {
 
 	setPiece(x, y, piece) {
 		this.board[y].splice(x, 1, piece);
+		return this;
 	}
 
 	getPieceAt(x, y) {
@@ -108,7 +130,7 @@ class Board {
 
 			let newDir = {};
 			if (!getSquare && dir.forward) {
-				newDir = { x0: x, y0: y, x1, y1, captured: false };
+				newDir = { x: x1, y: y1, hit: false };
 				acc.push(newDir);
 			}
 			return acc;
@@ -136,29 +158,40 @@ class Board {
 		}, [])
 	}
 
-	getAllHitsOrMoves(player) {
+	getAllHitsOrMoves(player, mustHitIfPossible = true) {
+		let mustHit = false;
 		let pieces = [];
+
 		for (let y = 0; y < this.size; y++) {
 			for (let x = 0; x < this.size; x++) {
 				let piece = this.board[y][x];
 				if (this.getPiecePlayer(piece) === player) {
-					let moves = this.getHitsOrMovesForPiece(x, y);
+					let moves = this.getHitsOrMovesForPiece(x, y, true);
 					if (moves.length > 0) {
+						if (moves[0].hit) mustHit = true;
 						pieces.push({
-							x,
-							y,
-							piece,
-							moves
+							piece: {
+								x, y
+							},
+							moves,
+							mustHit: moves[0].hit
 						});
 					}
 					
 				}
 			}
 		}
+		
+		if (mustHitIfPossible && mustHit) {
+			return pieces.filter(p => {
+				return p.mustHit;
+			});
+		}
+
 		return pieces;
 	}
 
-	getHitsOrMovesForPiece(x, y) {
+	getHitsOrMovesForPiece(x, y, onlyLongest = true) {
 		let hits = this.getPossibleHits(x, y);
 
 		if (hits.length < 1) {
@@ -168,17 +201,39 @@ class Board {
 
 		let board = Board.copy(this);
 
+		let longestPath = 1;
+
 		let sequences = hits.map(hit => {
 			board.makeMove(hit.x0, hit.y0, hit.x1, hit.y1);
 
 			let curSeqs = JSON.parse(JSON.stringify(board.recursiveHitSequences(hit.x1, hit.y1)));
 
 			board.undoMove();
+			
 			// console.log({ firstMove: {x: hit.x1, y: hit.y1}, curSeqs });
-			return { firstMove: {x: hit.x1, y: hit.y1}, steps: curSeqs };
+			for (let i = 0; i < curSeqs.length; i++) {
+				longestPath = Math.max(longestPath, curSeqs[i].length);
+			}
+
+			return { x: hit.x1, y: hit.y1, paths: curSeqs, hit: true };
 		})
 
 		// console.log("Returning all sequences at the start: ", sequences);
+
+		if (onlyLongest) {
+			// finds all paths that are the longest, discards the rest
+			// then finds all initial moves with a path that is among the longest
+			return sequences.reduce((acc, seq) => {
+				let newPaths = seq.paths.filter(path => {
+					return path.length >= longestPath;
+				})
+				if (newPaths.length < 1) return acc;
+				else {
+					acc.push({ ...seq, paths: newPaths });
+					return acc;
+				}
+			}, [])
+		}
 
 		return sequences;
 	}

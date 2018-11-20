@@ -24,7 +24,7 @@
 
 <script>
 import {Checkers, Board} from './utils/game.js';
-import {PIECES, SQUARE_TYPES} from './utils/constants.js';
+import {PIECES, SQUARE_TYPES, PLAYER_WHITE} from './utils/constants.js';
 
 import SquareComponent from './components/Square.vue';
 import PieceComponent from './components/Piece.vue';
@@ -62,8 +62,9 @@ export default {
 	},
 	mounted() {
 		// this.game.board.import('0b0b-bbbb-b000-0bbb-w0w0-w0w0-wwww-wwww');
-		let allHits = this.game.gameBoard.getAllHitsOrMoves(this.game.currentPlayer);
-		console.log(allHits);
+		//this.game.gameBoard.createBoard().setPiece(3, 6, 1).setPiece(2, 5, -1).setPiece(4, 5, -1).setPiece(2, 3, -1).setPiece(2, 1, -1).setPiece(4, 1, -1).setPiece(6, 7, 1).setPiece(4, 3, -1);
+
+		this.game.gameBoard.createBoard().setPiece(3, 4, 1).setPiece(2, 5, -1).setPiece(4, 3, -1).setPiece(6, 1, -1).setPiece(2, 3, -1).setPiece(4, 1, -1).setPiece(5, 6, 1);
 	}
 };
 </script>
