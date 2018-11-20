@@ -78,6 +78,23 @@ class Board {
 		return (x >= 0 && x < this.size) && (y >= 0 && y < this.size) && ((x + y) % 2 === 1);
 	}
 
+	//	only checks if a square exists in that direction, if it is a black square,
+	//		and adds if it is forward or not
+	getValidDirections(x, y) {
+		return DIRECTIONS.filter(dir => {
+			let x1 = dir.dx + x;
+			let y1 = dir.dy + y;
+			return this.isValidSquare(x1, y1);
+		}).map(dir => {
+			let type = this.getPieceAt(x, y);
+			let forward = true;
+			if (type === PIECES.manWhite && dir.dy < 0) forward = false;
+			else if (type === PIECES.manBlack && dir.dy > 0) forward = false;
+
+			return { ...dir, forward };
+		})
+	}
+
 	makeMove(x0, y0, x1, y1) {
 		let dx = x1 - x0;
 		let dy = y1 - y0;
