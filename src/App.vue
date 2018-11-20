@@ -7,14 +7,14 @@
 				:key="rowN"
 			>
 				<SquareComponent
+					@click.native="selectPiece(square.x, square.y)"
 					v-for="square in row"
 					:key="`${square.x},${square.y}`"
-					:color="square.squareColor"
+					:square="square"
 				>
-					<span class="square-coords" :class="{'selected': square.x === selectedPiece.x && square.y === selectedPiece.y}">{{square.x}},{{square.y}}</span>
+					<span class="square-coords">{{square.x}},{{square.y}}</span>
 
 					<PieceComponent
-						@click.native="selectPiece(square.x, square.y)"
 						:piece="board[square.y][square.x]" />
 				</SquareComponent>
 			</div>
@@ -37,8 +37,7 @@ export default {
 	},
 	data() {
 		return {
-			game: new Checkers(),
-			selectedPiece: {x: null, y: null}
+			game: new Checkers()
 		}
 	},
 	computed: {
@@ -50,24 +49,18 @@ export default {
 		},
 		size() {
 			return this.game.size;
-		},
-		activeSelection() {
-			return (this.selectedPiece.x !== null && this.selectedPiece.y !== null);
-		},
-		possiblePathsForSelection() {
-			if (!this.activeSelection) return [];
-			return this.game.getPossiblePathsForPiece(this.selectedPiece.x, this.selectedPiece.y);
 		}
 	},
 	methods: {
 		selectPiece(x, y) {
-			if (this.selectedPiece.x === x && this.selectedPiece.y === y) {
-				this.selectedPiece = {x: null, y: null};
-			} else if (this.game.canPieceMove(x, y)) {
-				this.selectedPiece = {x, y};
-			} else {
-				console.warn("Can't select piece as it is not a piece that can move this turn.");
-			}
+			this.game.checkerBoard.selectSquare(x, y);
+			// if (this.selectedPiece.x === x && this.selectedPiece.y === y) {
+			// 	this.selectedPiece = {x: null, y: null};
+			// } else if (this.game.canPieceMove(x, y)) {
+			// 	this.selectedPiece = {x, y};
+			// } else {
+			// 	console.warn("Can't select piece as it is not a piece that can move this turn.");
+			// }
 		}
 	},
 	mounted() {
@@ -107,9 +100,5 @@ export default {
 	font-size: 12px;
 }
 
-.square-coords.selected {
-	border: 0px solid blue;
-	border-bottom-width: 3px;
-	border-right-width: 3px;
-}
+
 </style>

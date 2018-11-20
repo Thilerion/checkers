@@ -440,14 +440,19 @@ class Grid {
 	}
 
 	selectSquare(x, y) {
+		//if (!this.grid[y][x].canBeSelected) return this;
+
 		if (this.selected !== null) {
 			if (this.selected.x === x && this.selected.y === y) {
-				return;
+				this.grid[this.selected.y][this.selected.x].selected = false;
+				this.selected = null;
+				return this;
 			}
 			this.grid[this.selected.y][this.selected.x].selected = false;
 		}
 		this.selected = { x, y };
 		this.grid[y][x].selected = true;
+		return this;
 	}
 
 	deselectSquare() {
@@ -456,6 +461,40 @@ class Grid {
 		const { x, y } = this.selected;
 		this.selected = null;
 		this.grid[y][x].selected = false;
+		return this;
+	}
+
+	updateSelectableSquares(arr) {
+		for (let i = 0; i < this.grid.length; i++) {
+			for (let j = 0; j < this.grid[i].length; j++) {
+				this.grid[j][i].canBeSelected = false;		
+			}
+		}
+
+		arr.forEach(square => {
+			this.grid[square.y][square.x].canBeSelected = true;
+		})
+		return this;
+	}
+
+	updatePossibleMovesHits(primMoves = [], nextMoves = [], hits = []) {
+		for (let i = 0; i < this.grid.length; i++) {
+			for (let j = 0; j < this.grid[i].length; j++) {
+				this.grid[j][i].isPossiblePrimaryMove = false;		
+				this.grid[j][i].isPossibleNextMove = false;		
+				this.grid[j][i].isPossibleHit = false;		
+			}
+		}
+
+		primMoves.forEach(square => {
+			this.grid[square.y][square.x].isPossiblePrimaryMove = true;
+		})
+		nextMoves.forEach(square => {
+			this.grid[square.y][square.x].isPossibleNextMove = true;
+		})
+		hits.forEach(square => {
+			this.grid[square.y][square.x].isPossibleHit = true;
+		})
 	}
 }
 
