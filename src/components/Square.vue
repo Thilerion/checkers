@@ -1,6 +1,7 @@
 <template>
 	<div class="square" :class="[typeClass]">
-		<div class="selected" v-if="selected"></div>
+		<div class="overlay selected" v-if="selected"></div>
+		<div class="overlay" :class="possibleMoveClass" v-else-if="possibleMoveClass"></div>
 		<slot/>
 	</div>
 </template>
@@ -18,6 +19,12 @@ export default {
 	computed: {
 		selected() {
 			return this.square.selected;
+		},
+		possibleMoveClass() {
+			if (this.square.isPossiblePrimaryMove) return 'primary-move';
+			else if (this.square.isPossibleNextMove) return 'next-move';
+			else if (this.square.isPossibleHit) return 'possible-hit';
+			else return;
 		},
 		typeClass() {
 			if (this.color === SQUARE_TYPES.white) return 'square-white';
@@ -44,11 +51,26 @@ export default {
 	background: rgb(218, 206, 175);
 }
 
-.selected {
+.overlay {
 	box-sizing: border-box;
-	border: 3px solid blue;
 	position: absolute;
 	width: 100%;
 	height: 100%;
+}
+
+.selected {
+	border: 3px solid blue;
+}
+
+.primary-move {
+	background: rgba(62, 62, 124, 1);
+}
+
+.next-move {
+	background: rgb(98, 98, 150);
+}
+
+.possible-hit {
+	background: rgba(106, 62, 124, 0.5);
 }
 </style>

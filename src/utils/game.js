@@ -147,15 +147,72 @@ class Checkers {
 		
 		// TODO: maybe check every path for their length? shouldn't be necessary because all paths should have been only the largest
 		if (this.currentPaths.length <= 0 || this.currentPaths[0].length <= 1) {
+			this.deselect();
 			return this.finishTurn();
 		} else {
 			console.warn("This was not the last hit in the path, another capture is required.");
-			return this.populatePossiblePieces();
+			this.populatePossiblePieces();
+
+			if (this.checkerBoard.selected.x === x0 && this.checkerBoard.selected.y === y0) {
+				this.select(x1, y1);
+			} else {
+				console.warn("Won't select next square because the currently moving piece was not selected either.");
+			}
+			return this;
 		}
 	}
 
 	canPieceMove(x, y) {
 		return !!this.possiblePieces.find(piece => piece.x === x && piece.y === y);
+	}
+
+	select(x, y) {
+		// called by selecting someting
+		// also called onHit, to select where the piece has moved to
+		// call checkerBoard.select
+		// call this updateSquarePossibleMovesAndHits
+		if (this.canPieceMove(x, y)) {
+			this.checkerBoard.selectSquare(x, y);
+			return this.updateSquaresPossibleMovesAndHits();
+		} else {
+			return this;
+		}
+	}
+
+	deselect() {
+		// called by finishTurn and after each hit with more hits to come
+		// calls checkerBoard.deselect
+		this.checkerBoard.deselectSquare();
+		return this;
+	}
+
+	updateSquaresPossibleMovesAndHits() {
+		// called on select
+		let selected = this.checkerBoard.selected;
+		if (!selected) return this;
+		let paths = [...this.currentPaths].filter(path => {
+			return path[0].x === selected.x && path[0].y === selected.y;
+		});
+
+		let { primMoves, nextMoves, possibleHits } = paths.reduce((acc, path) => {
+			for (let i = 1; i < path.length; i++) {
+				if (i === 1) acc.primMoves.push({ ...path[i] });
+				else {
+					acc.nextMoves.push({ ...path[i] });
+				}
+
+				let dx = Math.abs(path[i - 1].x - path[i].x);
+				let dy = Math.abs(path[i - 1].y - path[i].y);
+				if (dx > 1 && dy > 1) {
+					acc.possibleHits.push({x: (path[i - 1].x + path[i].x) / 2, y: (path[i - 1].y + path[i].y) / 2})
+				}
+			}
+			return acc;
+		}, { primMoves: [], nextMoves: [], possibleHits: [] });
+
+		this.checkerBoard.updatePossibleMovesHits(primMoves, nextMoves, possibleHits);
+
+		return this;
 	}
 }
 
@@ -440,15 +497,13 @@ class Grid {
 	}
 
 	selectSquare(x, y) {
-		//if (!this.grid[y][x].canBeSelected) return this;
-
 		if (this.selected !== null) {
 			if (this.selected.x === x && this.selected.y === y) {
-				this.grid[this.selected.y][this.selected.x].selected = false;
-				this.selected = null;
+				this.deselectSquare();
 				return this;
+			} else {
+				this.deselectSquare();
 			}
-			this.grid[this.selected.y][this.selected.x].selected = false;
 		}
 		this.selected = { x, y };
 		this.grid[y][x].selected = true;
@@ -461,20 +516,7 @@ class Grid {
 		const { x, y } = this.selected;
 		this.selected = null;
 		this.grid[y][x].selected = false;
-		return this;
-	}
-
-	updateSelectableSquares(arr) {
-		for (let i = 0; i < this.grid.length; i++) {
-			for (let j = 0; j < this.grid[i].length; j++) {
-				this.grid[j][i].canBeSelected = false;		
-			}
-		}
-
-		arr.forEach(square => {
-			this.grid[square.y][square.x].canBeSelected = true;
-		})
-		return this;
+		return this.updatePossibleMovesHits();
 	}
 
 	updatePossibleMovesHits(primMoves = [], nextMoves = [], hits = []) {
@@ -495,6 +537,7 @@ class Grid {
 		hits.forEach(square => {
 			this.grid[square.y][square.x].isPossibleHit = true;
 		})
+		return this;
 	}
 }
 
@@ -505,7 +548,6 @@ class Square {
 		this.y = y;
 
 		this.selected = false;
-		this.canBeSelected = false;
 		this.isPossiblePrimaryMove = false;
 		this.isPossibleNextMove = false;
 		this.isPossibleHit = false;
