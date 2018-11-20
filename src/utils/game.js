@@ -163,22 +163,83 @@ class Checkerboard {
 			}
 		}
 
+		let tree = { x: piece.x, y: piece.y, next: [] };
+		if (hits.length > 0) {
+			for (let i = 0; i < hits.length; i++) {
+				let newNode = this.findLongestHitChain(piece, hits[i]);
+				tree.next.push(newNode);
+			}
+		}
+
+		console.log(tree);
+
 		return {moves, hits};
 	}
 
 	isHit(piece, dir) {
 		let hitDir = {
-			x: piece.x + dir.dx + dir.dx,
-			y: piece.y + dir.dy + dir.dy
+			x: dir.x + dir.dx,
+			y: dir.y + dir.dy,
+			captured: [{x: dir.x, y: dir.y}]
 		};
-
-		hitDir.length = dir.length == null ? 1 : dir.length + 1;
 
 		let adjacentPiece = this.getPieceAt(hitDir.x, hitDir.y);
 		if (!adjacentPiece) {
 			return hitDir;
 		}
 		return;
+	}
+
+	findLongestHitChain(piece, hit) {
+		console.log(hit);
+		let node = { ...hit, next: [] };
+
+		let { captured = [] } = hit;
+
+		const startX = piece.x;
+		const startY = piece.y;
+		const curX = hit.x;
+		const curY = hit.y;
+
+		//console.log(hit, { startX, startY, curX, curY });
+		
+		for (let i = 0; i < DIRECTIONS.length; i++) {
+			let dir = DIRECTIONS[i];
+
+			let nextCoords = { x: curX + dir.dx, y: curY + dir.dy };
+			let nextSquare = this.getPieceAt(nextCoords.x, nextCoords.y);
+
+			if (!this.isValidSquare(nextCoords.x, nextCoords.y)) {
+				continue;
+			}
+
+			let nextPieceAlreadyCaptured = false;
+			if (nextSquare) {
+				nextPieceAlreadyCaptured = !!hit.captured.find(cap => cap.x === nextCoords.x && cap.y === nextCoords.y);
+			}
+
+			let adjacentCoords = { x: nextCoords.x + dir.dx, y: nextCoords.y + dir.dy };
+			let adjacentPiece = this.getPieceAt(adjacentCoords.x, adjacentCoords.y);
+
+			if (!this.isValidSquare(adjacentCoords.x, adjacentCoords.y)) {
+				continue;
+			}
+
+			if (nextSquare &&
+				(nextSquare.playerId !== piece.playerId) &&
+				!nextPieceAlreadyCaptured &&
+				(!adjacentPiece || (adjacentCoords.x === startX && adjacentCoords.y === startY))) {
+				// if next square has a piece, that piece is from the opponent,
+				// 	that piece has not yet been captured, and the adjacent piece is free or is the original evaluated piece position
+				node.next.push({ ...adjacentCoords, captured: [nextCoords, ...captured] });
+			}
+		}
+
+		for (let i = 0; i < node.next.length; i++) {
+			node.next[i] = this.findLongestHitChain(piece, node.next[i]);
+		}
+
+		return node;
 	}
 }
 

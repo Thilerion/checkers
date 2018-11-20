@@ -48,9 +48,7 @@ export default {
 		}
 	},
 	mounted() {
-		this.game.board.import('bb0b-bbbb-b00b-0bb0-w0w0-w0w0-wwww-wwww');
-		let x = this.game.board.export();
-		console.log(x);
+		this.game.board.import('0b0b-bbbb-b000-0bbb-w0w0-w0w0-wwww-wwww');
 	}
 };
 </script>
