@@ -21,31 +21,33 @@ class Checkers {
 
 		this.currentPlayer = this.firstMove;
 
-		this.piecesWithAvailableMoves = [];
 		this.mustHit = false;
 		this.currentPaths = [];
-		this.mustFinishPathWith = { x: null, y: null };
 
 		this.initializeTurn();
 	}
 
 	initializeTurn() {
-		this.piecesWithAvailableMoves = this.gameBoard.getAllHitsOrMoves(this.currentPlayer, true);
+		let hitsAndMoves = this.gameBoard.getAllHitsOrMoves(this.currentPlayer, true);
 		
-		for (let i = 0; i < this.piecesWithAvailableMoves.length; i++) {
-			let move = this.piecesWithAvailableMoves[i];
+		for (let i = 0; i < hitsAndMoves.length; i++) {
+			let move = hitsAndMoves[i];
 			if (move.mustHit && this.mustHit === false) this.mustHit = true;
 		}
 
-		if (this.mustHit) this.populatePaths();
+		if (this.mustHit) {
+			this.populatePathsMustHit(hitsAndMoves);
+		} else {
+			this.populatePathsMoves(hitsAndMoves);
+		}
 
 		return this;
 	}
 
-	populatePaths() {
+	populatePathsMustHit(hits) {
 		let paths = [];
 
-		this.piecesWithAvailableMoves.forEach(piece => {
+		hits.forEach(piece => {
 			piece.moves.forEach(initialMove => {
 				initialMove.paths.forEach(path => {
 					let reducedPath = path.map(p => {
@@ -63,11 +65,28 @@ class Checkers {
 		return this;
 	}
 
+	populatePathsMoves(moves) {
+		let paths = [];
+
+		moves.forEach(piece => {
+			let reducedMoves = piece.moves.map(move => {
+				return { x: move.x, y: move.y };
+			})
+			reducedMoves.forEach(move => {
+				let curMove = [
+					piece.piece,
+					move
+				];			
+				paths.push(curMove);
+			})
+		})
+		this.currentPaths = paths;
+		return this;
+	}
+
 	finishTurn() {
-		this.piecesWithAvailableMoves = [];
 		this.mustHit = false;
 		this.currentPaths = [];
-		this.mustFinishPathWith = {x: null, y: null};
 		return this.nextPlayer().initializeTurn();
 	}
 
@@ -77,12 +96,32 @@ class Checkers {
 		return this;
 	}
 
+	isMoveValidPath(x0, y0, x1, y1) {
+		return !!this.currentPaths.find(path => {
+			let validStartPiece = path[0].x === x0 && path[0].y === y0;
+			let validMovement = path[1].x === x1 && path[1].y === y1;
+			return validStartPiece && validMovement;
+		})
+	}
+
 	move(x0, y0, x1, y1) {
+		//TODO: check if move or hit in currentPath
+		if (!this.isMoveValidPath(x0, y0, x1, y1)) {
+			console.warn(`Can't move ${x0},${y0} to ${x1},${y1} as it is not a valid path.`);
+			return this;
+		}
+		
 		this.gameBoard.makeMove(x0, y0, x1, y1);
-		this.finishTurn();
+		return this.finishTurn();
 	}
 
 	hit(x0, y0, x1, y1) {
+		//TODO: check if move or hit in currentPath
+		if (!this.isMoveValidPath(x0, y0, x1, y1)) {
+			console.warn(`Can't move ${x0},${y0} to ${x1},${y1} as it is not a valid path.`);
+			return this;
+		}
+
 		this.gameBoard.makeMove(x0, y0, x1, y1);
 
 		this.currentPaths = this.currentPaths.filter(path => {
@@ -93,9 +132,10 @@ class Checkers {
 		
 		// TODO: maybe check every path for their length? shouldn't be necessary because all paths should have been only the largest
 		if (this.currentPaths.length <= 0 || this.currentPaths[0].length <= 1) {
-			this.finishTurn();
+			return this.finishTurn();
 		} else {
-			this.mustFinishPathWith = { x: x1, y: y1 };
+			console.warn("This was not the last hit in the path, another capture is required.");
+			return this;
 		}
 	}
 
@@ -110,16 +150,9 @@ class Checkers {
 			console.warn(`Can't move piece at ${x},${y} if it is the enemy's piece.`);
 			return false;
 		}
-		if (this.mustFinishPathWith.x !== null) {
-			if (this.mustFinishPathWith.x !== x || this.mustFinishPathWith.y !== y) {
-				console.warn(`Piece at ${x},${y} can't be moved, as only a move in the current path is allowed`);
-				return false;
-			} else {
-				// Yes, allowed, since this is the only piece that can be moved as this path has been chosen
-				return true;
-			}
-		}
-		return !!this.piecesWithAvailableMoves.find(p => p.piece.x === x && p.piece.y === y);
+		return !!this.currentPaths.find(path => {
+			return path[0].x === x && path[0].y === y;
+		})
 	}
 }
 
