@@ -24,6 +24,7 @@ class Checkers {
 		this.piecesWithAvailableMoves = [];
 		this.mustHit = false;
 		this.currentPaths = [];
+		this.mustFinishPathWith = { x: null, y: null };
 
 		this.initializeTurn();
 	}
@@ -52,7 +53,6 @@ class Checkers {
 					});
 					let curPath = [
 						piece.piece,
-						{ x: initialMove.x, y: initialMove.y },
 						...reducedPath
 					];
 					paths.push(curPath);
@@ -67,6 +67,7 @@ class Checkers {
 		this.piecesWithAvailableMoves = [];
 		this.mustHit = false;
 		this.currentPaths = [];
+		this.mustFinishPathWith = {x: null, y: null};
 		return this.nextPlayer().initializeTurn();
 	}
 
@@ -81,8 +82,44 @@ class Checkers {
 		this.finishTurn();
 	}
 
-	hit() {
+	hit(x0, y0, x1, y1) {
+		this.gameBoard.makeMove(x0, y0, x1, y1);
 
+		this.currentPaths = this.currentPaths.filter(path => {
+			return path[0].x === x0 && path[0].y === y0 && path[1].x === x1 && path[1].y === y1;
+		}).map(path => {
+			return path.slice(1);
+		})
+		
+		// TODO: maybe check every path for their length? shouldn't be necessary because all paths should have been only the largest
+		if (this.currentPaths.length <= 0 || this.currentPaths[0].length <= 1) {
+			this.finishTurn();
+		} else {
+			this.mustFinishPathWith = { x: x1, y: y1 };
+		}
+	}
+
+	canPieceMove(x, y) {
+		let piece = this.gameBoard.getPieceAt(x, y);
+		if (!piece) {
+			console.warn(`No piece was found at ${x},${y} so it can't be moved.`);
+			return false;
+		}
+		if (this.gameBoard.getPiecePlayer(this.gameBoard.getPieceAt(x, y)) !== this.currentPlayer) {
+			// piece doesn't belong to current player
+			console.warn(`Can't move piece at ${x},${y} if it is the enemy's piece.`);
+			return false;
+		}
+		if (this.mustFinishPathWith.x !== null) {
+			if (this.mustFinishPathWith.x !== x || this.mustFinishPathWith.y !== y) {
+				console.warn(`Piece at ${x},${y} can't be moved, as only a move in the current path is allowed`);
+				return false;
+			} else {
+				// Yes, allowed, since this is the only piece that can be moved as this path has been chosen
+				return true;
+			}
+		}
+		return !!this.piecesWithAvailableMoves.find(p => p.piece.x === x && p.piece.y === y);
 	}
 }
 
@@ -284,13 +321,15 @@ class Board {
 		let hits = this.getPossibleHits(x, y);
 
 		if (hits.length < 1) {
-			// return captures in history
-			let captures = this.history.reduce((caps, move) => {
-				if (move.capture) caps.push(JSON.parse(JSON.stringify(move.capture)));
-				return caps;
+			// return next positions after hits in history
+			let movements = this.history.reduce((moves, move) => {
+				if (move.capture) {
+					moves.push(JSON.parse(JSON.stringify({x: move.x1, y: move.y1})))
+				}
+				return moves;
 			}, []);
 			// console.log("Returning captures at end of chain: ", captures);
-			return [captures];
+			return [movements];
 		}
 
 		let sequences = [];
@@ -360,250 +399,6 @@ class Grid {
 			arr.push(row);
 		}
 		return arr;
-	}
-}
-
-class GridOLD {
-	import(str) {
-		// w and W for white man and king
-		// b and B for black man and king
-		// NO_PIECE === 0 === empty
-		// - is next row
-		this.pieces = [];
-
-		let rows = str.split('-');
-
-		for (let y = 0; y < rows.length; y++) {
-			let row = rows[y];
-			for (let i = 0, x = 1 - (y % 2); i < row.length && x < this.size; i++ , x += 2) {
-				if (row[i] == NO_PIECE) {
-					// double equals for the string > int typecasting
-					continue;
-				}
-
-				let p = row[i].toLowerCase() === 'w' ? PLAYER_WHITE : PLAYER_BLACK;
-				let type = row[i].toLowerCase() === row[i] ? PIECE_MAN : PIECE_KING;
-				this.pieces.push(new Piece(p, x, y, type));
-			}
-		}
-		return this;
-	}
-
-	export() {
-		let pieces = [];
-
-		for (let i = 0; i < this.pieces.length; i++) {
-			let p = this.pieces[i];
-
-			let x = p.x % 2 === 0 ? p.x / 2 : (p.x - 1) / 2;
-			let y = Math.floor(p.y % this.size);
-
-			let char = p.playerId === PLAYER_WHITE ? 'w' : 'b';
-			
-			let typeChar = p.type === PIECE_MAN ? char : char.toUpperCase();
-
-			pieces.push({ ch: typeChar, x, y });
-		}
-
-		pieces.sort((a, b) => {
-			let indexA = (a.y * this.size) + a.x;
-			let indexB = (b.y * this.size) + b.x;
-			return indexA < indexB;
-		});
-
-		let arr = [];
-		for (let i = 0; i < pieces.length; i++) {
-			let p = pieces[i];
-
-			if (!arr[p.y]) arr[p.y] = Array(this.size / 2).fill(0);
-			arr[p.y][p.x] = p.ch;
-		}
-		
-		return arr.map(row => row.join('')).join('-');
-	}
-
-	addPieces() {
-		let rowsPerPlayer = (this.size / 2) - 1;
-		let piecesPerRow = this.size / 2;
-
-		let arr = [];
-
-		for (let i = 0; i < rowsPerPlayer; i++) {
-			for (let j = 0; j < piecesPerRow; j++) {
-				let pB, pW;
-				if (i % 2 === 0) {
-					pB = new Piece(PLAYER_BLACK, j * 2 + 1, i, PIECE_MAN);
-					pW = new Piece(PLAYER_WHITE, j * 2, this.size - i - 1, PIECE_MAN);
-				} else {
-					pB = new Piece(PLAYER_BLACK, j * 2, i, PIECE_MAN);
-					pW = new Piece(PLAYER_WHITE, j * 2 + 1, this.size - i - 1, PIECE_MAN);
-				}
-				arr.push(pB, pW);
-			}
-		}
-		return arr;
-	}
-
-	isValidSquare(x, y) {
-		return (x >= 0 && x < this.size) && (y >= 0 && y < this.size) && this.grid[y][x].squareColor === SQUARE_TYPES.black;
-	}
-
-	getPieceAt(x, y) {
-		return this.pieces.find(p => p.x === x && p.y === y && p.alive);
-	}
-
-	getValidDirsFor(piece) {
-		if (!piece) return [];
-		return piece.getDirections().filter(dir => this.isValidSquare(dir.x, dir.y));
-	}
-
-	getValidMovesFor(x, y) {
-		let piece = this.getPieceAt(x, y);
-		let dirs = this.getValidDirsFor(piece);
-
-		// check if piece on dir
-		// 		yes: enemy piece? check for hit, else nothing
-		//		no: possible move
-		let moves = [], hits = [];
-
-		for (let i = 0; i < dirs.length; i++) {
-			let dir = dirs[i];
-
-			let movePiece = this.getPieceAt(dir.x, dir.y);
-
-			if (!movePiece && dir.forward) {
-				// empty square, and the direction is forward, so possible move
-				moves.push({x: dir.x, y: dir.y});
-			} else if (movePiece && movePiece.playerId !== piece.playerId) {
-				// square has an opponent's piece, so maybe a hit direction
-				let hit = this.isHit(piece, dir);
-				if (hit) {
-					// TODO: check hits recursive
-					hits.push(hit);
-				}
-			}
-		}
-
-		let tree = { x: piece.x, y: piece.y, next: [] };
-		if (hits.length > 0) {
-			for (let i = 0; i < hits.length; i++) {
-				let newNode = this.findLongestHitChain(piece, hits[i]);
-				tree.next.push(newNode);
-			}
-		}
-
-		console.log(tree);
-
-		return {moves, hits};
-	}
-
-	isHit(piece, dir) {
-		let hitDir = {
-			x: dir.x + dir.dx,
-			y: dir.y + dir.dy,
-			captured: [{x: dir.x, y: dir.y}]
-		};
-
-		let adjacentPiece = this.getPieceAt(hitDir.x, hitDir.y);
-		if (!adjacentPiece) {
-			return hitDir;
-		}
-		return;
-	}
-
-	findLongestHitChain(piece, hit) {
-		console.log(hit);
-		let node = { ...hit, next: [] };
-
-		let { captured = [] } = hit;
-
-		const startX = piece.x;
-		const startY = piece.y;
-		const curX = hit.x;
-		const curY = hit.y;
-
-		//console.log(hit, { startX, startY, curX, curY });
-		
-		for (let i = 0; i < DIRECTIONS.length; i++) {
-			let dir = DIRECTIONS[i];
-
-			let nextCoords = { x: curX + dir.dx, y: curY + dir.dy };
-			let nextSquare = this.getPieceAt(nextCoords.x, nextCoords.y);
-
-			if (!this.isValidSquare(nextCoords.x, nextCoords.y)) {
-				continue;
-			}
-
-			let nextPieceAlreadyCaptured = false;
-			if (nextSquare) {
-				nextPieceAlreadyCaptured = !!hit.captured.find(cap => cap.x === nextCoords.x && cap.y === nextCoords.y);
-			}
-
-			let adjacentCoords = { x: nextCoords.x + dir.dx, y: nextCoords.y + dir.dy };
-			let adjacentPiece = this.getPieceAt(adjacentCoords.x, adjacentCoords.y);
-
-			if (!this.isValidSquare(adjacentCoords.x, adjacentCoords.y)) {
-				continue;
-			}
-
-			if (nextSquare &&
-				(nextSquare.playerId !== piece.playerId) &&
-				!nextPieceAlreadyCaptured &&
-				(!adjacentPiece || (adjacentCoords.x === startX && adjacentCoords.y === startY))) {
-				// if next square has a piece, that piece is from the opponent,
-				// 	that piece has not yet been captured, and the adjacent piece is free or is the original evaluated piece position
-				node.next.push({ ...adjacentCoords, captured: [nextCoords, ...captured] });
-			}
-		}
-
-		for (let i = 0; i < node.next.length; i++) {
-			node.next[i] = this.findLongestHitChain(piece, node.next[i]);
-		}
-
-		return node;
-	}
-}
-
-class Piece {
-	constructor(player, x, y, type = PIECE_MAN) {
-		this.playerId = player;
-		this.x = x;
-		this.y = y;
-		this.type = type;
-
-		if (player === PLAYER_BLACK) {
-			this.pieceId = type === PIECE_MAN ? PIECES.manBlack : PIECES.kingBlack;
-		} else if (player === PLAYER_WHITE) {
-			this.pieceId = type === PIECE_MAN ? PIECES.manWhite : PIECES.kingWhite;
-		}
-
-		this.alive = true;
-	}
-
-	hitPiece() {
-		this.alive = false;
-		return this;
-	}
-
-	crownPiece() {
-		this.type = PIECE_KING;
-		return this;
-	}
-
-	isKing() {
-		return this.type === PIECE_KING;
-	}
-
-	getDirections() {
-		return DIRECTIONS.map(dir => {
-			let forward;
-			if (this.playerId === PLAYER_WHITE) {
-				forward = dir.dy < 0;
-			} else if (this.playerId === PLAYER_BLACK) {
-				forward = dir.dy > 0;
-			}
-			return { ...dir, x: dir.dx + this.x, y: dir.dy + this.y, forward };
-		});
 	}
 }
 
