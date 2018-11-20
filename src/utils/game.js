@@ -139,6 +139,7 @@ class Checkerboard {
 
 		hitDir.x = piece.x + hitDir.dx;
 		hitDir.y = piece.y + hitDir.dy;
+		hitDir.length = dir.length == null ? 1 : dir.length + 1;
 
 		let adjacentPiece = this.getPieceAt(hitDir.x, hitDir.y);
 		if (!adjacentPiece) {
