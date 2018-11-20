@@ -1,5 +1,5 @@
 <template>
-	<div class="square" :class="typeClass">
+	<div class="square" :class="[typeClass]">
 		<slot/>
 	</div>
 </template>

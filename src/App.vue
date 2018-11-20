@@ -51,16 +51,22 @@ export default {
 		size() {
 			return this.game.size;
 		},
-		pieces() {
-			return this.game.pieces;
+		activeSelection() {
+			return (this.selectedPiece.x !== null && this.selectedPiece.y !== null);
+		},
+		possiblePathsForSelection() {
+			if (!this.activeSelection) return [];
+			return this.game.getPossiblePathsForPiece(this.selectedPiece.x, this.selectedPiece.y);
 		}
 	},
 	methods: {
 		selectPiece(x, y) {
 			if (this.selectedPiece.x === x && this.selectedPiece.y === y) {
 				this.selectedPiece = {x: null, y: null};
-			} else {
+			} else if (this.game.canPieceMove(x, y)) {
 				this.selectedPiece = {x, y};
+			} else {
+				console.warn("Can't select piece as it is not a piece that can move this turn.");
 			}
 		}
 	},
@@ -75,8 +81,8 @@ export default {
 		// this.game.hit(7, 0, 5, 2);
 		// this.game.hit(5, 6, 7, 4);
 		// console.log(this.game.currentPlayer);
-		this.game.move(1, 6, 2, 5);
-		this.game.move(2, 5, 3, 4);
+		// this.game.move(1, 6, 2, 5);
+		// this.game.move(2, 5, 3, 4);
 	}
 };
 </script>
@@ -85,6 +91,7 @@ export default {
 .board {
 	display: flex;
 	flex-direction: column;
+	user-select: none;
 }
 
 .row {

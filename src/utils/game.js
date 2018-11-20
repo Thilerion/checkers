@@ -23,8 +23,15 @@ class Checkers {
 
 		this.mustHit = false;
 		this.currentPaths = [];
+		this.possiblePieces = [];
 
 		this.initializeTurn();
+	}
+
+	getPossiblePathsForPiece(x, y) {
+		return this.currentPaths.filter(path => {
+			return path[0].x === x && path[0].y === y;
+		})
 	}
 
 	initializeTurn() {
@@ -41,6 +48,13 @@ class Checkers {
 			this.populatePathsMoves(hitsAndMoves);
 		}
 
+		this.populatePossiblePieces();
+
+		return this;
+	}
+
+	populatePossiblePieces() {
+		this.possiblePieces = [...new Set(this.currentPaths.map(path => path[0]))];
 		return this;
 	}
 
@@ -87,6 +101,7 @@ class Checkers {
 	finishTurn() {
 		this.mustHit = false;
 		this.currentPaths = [];
+		this.possiblePieces = [];
 		return this.nextPlayer().initializeTurn();
 	}
 
@@ -135,24 +150,12 @@ class Checkers {
 			return this.finishTurn();
 		} else {
 			console.warn("This was not the last hit in the path, another capture is required.");
-			return this;
+			return this.populatePossiblePieces();
 		}
 	}
 
 	canPieceMove(x, y) {
-		let piece = this.gameBoard.getPieceAt(x, y);
-		if (!piece) {
-			console.warn(`No piece was found at ${x},${y} so it can't be moved.`);
-			return false;
-		}
-		if (this.gameBoard.getPiecePlayer(this.gameBoard.getPieceAt(x, y)) !== this.currentPlayer) {
-			// piece doesn't belong to current player
-			console.warn(`Can't move piece at ${x},${y} if it is the enemy's piece.`);
-			return false;
-		}
-		return !!this.currentPaths.find(path => {
-			return path[0].x === x && path[0].y === y;
-		})
+		return !!this.possiblePieces.find(piece => piece.x === x && piece.y === y);
 	}
 }
 
@@ -418,6 +421,8 @@ class Grid {
 	constructor(size) {
 		this.size = size;
 		this.grid = this.createEmpty(this.size);
+
+		this.selected = null;
 	}
 
 	createEmpty(size) {
@@ -433,6 +438,25 @@ class Grid {
 		}
 		return arr;
 	}
+
+	selectSquare(x, y) {
+		if (this.selected !== null) {
+			if (this.selected.x === x && this.selected.y === y) {
+				return;
+			}
+			this.grid[this.selected.y][this.selected.x].selected = false;
+		}
+		this.selected = { x, y };
+		this.grid[y][x].selected = true;
+	}
+
+	deselectSquare() {
+		if (this.selected === null) return;
+
+		const { x, y } = this.selected;
+		this.selected = null;
+		this.grid[y][x].selected = false;
+	}
 }
 
 class Square {
@@ -440,111 +464,13 @@ class Square {
 		this.squareColor = color;
 		this.x = x;
 		this.y = y;
+
+		this.selected = false;
+		this.canBeSelected = false;
+		this.isPossiblePrimaryMove = false;
+		this.isPossibleNextMove = false;
+		this.isPossibleHit = false;
 	}
 }
 
-/*class Board {
-	constructor(size, grid) {
-		this.size = size;
-		this.grid = grid;
-	}
-
-	static empty(size) {
-		return new Board(size, this.createEmptyGrid(size));
-	}
-	
-	static createEmptyGrid(size) {
-		return Array(size * size).fill(EMPTY_CELL);
-	}
-
-	coordsToIndex(x, y) {
-		return coordsToIndex(x, y, this.size);
-	}
-
-	indexToCoords(index) {
-		return indexToCoords(index, this.size);
-	}
-
-	getCellType(x, y) {
-		if ((x + y) % 2 === 0) return CELL_TYPES.white;
-		return CELL_TYPES.black;
-	}
-
-	initialFill() {
-		let arr = this.grid;
-		let rowsPerPlayer = (this.size / 2) - 1;
-
-		for (let i = 0; i < this.size; i++) {
-			for (let j = 0; j < this.size; j++) {
-				if (i < rowsPerPlayer) {
-					//blacks
-					if ((j + i) % 2 !== 0) {
-						arr[coordsToIndex(j, i, this.size)] = PIECES.manBlack;
-					}
-				} else if (i > this.size - rowsPerPlayer - 1) {
-					//whites
-					if ((j + i) % 2 !== 0) {
-						arr[coordsToIndex(j, i, this.size)] = PIECES.manWhite;
-					}
-				}
-			}
-		}
-		this.grid = [...arr];
-		return this;
-	}
-
-	getPieceAt(x, y) {
-		return this.grid[this.coordsToIndex(x, y)];
-	}
-
-	isValidCell(x, y) {
-		return (x >= 0 && x < this.size) && (x >= 0 && y < this.size);
-	}
-}
-
-class Pos {
-	constructor() {
-		this.x = null;
-		this.y = null;
-		this.index = null;
-		this.boardSize = null;
-	}
-
-	setIndex(index, boardSize) {
-		this.index = index;
-		this.boardSize = boardSize;
-		
-		const { x, y } = indexToCoords(index, boardSize);
-		this.x = x;
-		this.y = y;
-		return this;
-	}
-
-	getIndex() {
-		if (!this.index) {
-			this.index = coordsToIndex(this.x, this.y, this.size);
-		}
-		return this.index;
-	}
-
-	setCoords(x, y, size) {
-		this.x = x;
-		this.y = y;
-		this.size = size;
-		this.index = coordsToIndex(x, y, size);
-		return this;
-	}
-
-	getCoords() {
-		if (this.x == null || this.y == null) {
-			const { x, y } = indexToCoords(index, boardSize);
-			this.x = x;
-			this.y = y;
-		}
-		return { x: this.x, y: this.y };
-	}
-}*/
-
-// let g = new Game({ size: 8 });
-
-export { Checkers, Checkerboard, Square, Piece };
+export { Checkers, Board, Grid, Square, Piece };
