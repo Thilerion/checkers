@@ -97,11 +97,29 @@ class Checkerboard {
 				moves.push(dir);
 			} else if (movePiece && movePiece.playerId !== piece.playerId) {
 				// square has an opponent's piece, so maybe a hit direction
+				let hit = this.isHit(piece, dir);
+				if (hit) hits.push(hit);
 				// TODO: check hits recursive
 			}
 		}
 
 		return {moves, hits};
+	}
+
+	isHit(piece, dir) {
+		let hitDir = {
+			dx: dir.dx + dir.dx,
+			dy: dir.dy + dir.dy
+		};
+
+		hitDir.x = piece.x + hitDir.dx;
+		hitDir.y = piece.y + hitDir.dy;
+
+		let adjacentPiece = this.getPieceAt(hitDir.x, hitDir.y);
+		if (!adjacentPiece) {
+			return hitDir;
+		}
+		return false;
 	}
 }
 
