@@ -59,7 +59,9 @@ export default {
 		selectPiece(x, y) {
 			if (this.selectedPiece.x === x && this.selectedPiece.y === y) {
 				this.selectedPiece = {x: null, y: null};
-			} else this.selectedPiece = {x, y};
+			} else {
+				this.selectedPiece = {x, y};
+			}
 		}
 	},
 	mounted() {
