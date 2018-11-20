@@ -1,12 +1,21 @@
 <template>
 	<div id="app">
 		<div class="board">
-			<div class="row" v-for="(row, rowN) in grid" :key="rowN">
-				<SquareComponent v-for="square in row" :key="`${square.x},${square.y}`" :color="square.squareColor">
-					<!-- <div> -->
-						<span class="square-coords">{{square.x}},{{square.y}}</span>
-						<PieceComponent @click.native="clickPiece(square.x, square.y)" :piece="board[square.y][square.x]" />
-					<!-- </div> -->
+			<div
+				class="row"
+				v-for="(row, rowN) in grid"
+				:key="rowN"
+			>
+				<SquareComponent
+					v-for="square in row"
+					:key="`${square.x},${square.y}`"
+					:color="square.squareColor"
+				>
+					<span class="square-coords" :class="{'selected': square.x === selectedPiece.x && square.y === selectedPiece.y}">{{square.x}},{{square.y}}</span>
+
+					<PieceComponent
+						@click.native="selectPiece(square.x, square.y)"
+						:piece="board[square.y][square.x]" />
 				</SquareComponent>
 			</div>
 		</div>
@@ -28,7 +37,8 @@ export default {
 	},
 	data() {
 		return {
-			game: new Checkers()
+			game: new Checkers(),
+			selectedPiece: {x: null, y: null}
 		}
 	},
 	computed: {
@@ -46,26 +56,14 @@ export default {
 		}
 	},
 	methods: {
-		pieceAt(x, y) {
-			return this.pieces.find(p => p.x === x && p.y === y && p.alive);
-		},
-		clickPiece(x, y) {
-			console.log(this.game.board.getValidMovesFor(x, y));
+		selectPiece(x, y) {
+			this.selectedPiece = {x, y};
 		}
 	},
 	mounted() {
 		// this.game.board.import('0b0b-bbbb-b000-0bbb-w0w0-w0w0-wwww-wwww');
-		this.game.gameBoard.makeMove(1, 2, 2, 3).makeMove(4, 5, 3, 4).makeMove(0, 5, 1, 4).removePiece(6, 7);
-		this.game.gameBoard.removePiece(2, 7);
-		this.game.gameBoard.removePiece(0, 1);
-		this.game.gameBoard.setPiece(1, 2, 1);
-		// console.log({ moves: this.game.gameBoard.getPossibleMoves(2, 3)});
-		// console.log({ hits: this.game.gameBoard.getPossibleHits(2, 3)});
-		let piece56 = this.game.gameBoard.getHitsOrMoves(5, 6); //one move
-		let piece14 = this.game.gameBoard.getHitsOrMoves(1, 4); //one move
-		let piece21 = this.game.gameBoard.getHitsOrMoves(2, 1); //one hit
-
-		console.log({piece56, piece14, piece21});
+		let allHits = this.game.gameBoard.getAllHitsOrMoves(this.game.currentPlayer);
+		console.log(allHits);
 	}
 };
 </script>
@@ -87,5 +85,11 @@ export default {
 	background: rgb(255, 206, 206);
 	opacity: 0.7;
 	font-size: 12px;
+}
+
+.square-coords.selected {
+	border: 0px solid blue;
+	border-bottom-width: 3px;
+	border-right-width: 3px;
 }
 </style>

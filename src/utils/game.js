@@ -76,7 +76,7 @@ class Board {
 
 	getPiecePlayer(piece) {
 		if (piece < 0) return PLAYER_BLACK;
-		return PLAYER_WHITE;
+		else if (piece > 0) return PLAYER_WHITE;
 	}
 
 	isValidSquare(x, y) {
@@ -136,7 +136,29 @@ class Board {
 		}, [])
 	}
 
-	getHitsOrMoves(x, y) {
+	getAllHitsOrMoves(player) {
+		let pieces = [];
+		for (let y = 0; y < this.size; y++) {
+			for (let x = 0; x < this.size; x++) {
+				let piece = this.board[y][x];
+				if (this.getPiecePlayer(piece) === player) {
+					let moves = this.getHitsOrMovesForPiece(x, y);
+					if (moves.length > 0) {
+						pieces.push({
+							x,
+							y,
+							piece,
+							moves
+						});
+					}
+					
+				}
+			}
+		}
+		return pieces;
+	}
+
+	getHitsOrMovesForPiece(x, y) {
 		let hits = this.getPossibleHits(x, y);
 
 		if (hits.length < 1) {
