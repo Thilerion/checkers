@@ -74,6 +74,10 @@ class Board {
 		return this.board[y][x];
 	}
 
+	isValidSquare(x, y) {
+		return (x >= 0 && x < this.size) && (y >= 0 && y < this.size) && ((x + y) % 2 === 1);
+	}
+
 	makeMove(x0, y0, x1, y1) {
 		let dx = x1 - x0;
 		let dy = y1 - y0;
