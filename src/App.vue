@@ -57,14 +57,17 @@ export default {
 	},
 	methods: {
 		selectPiece(x, y) {
-			this.selectedPiece = {x, y};
+			if (this.selectedPiece.x === x && this.selectedPiece.y === y) {
+				this.selectedPiece = {x: null, y: null};
+			} else this.selectedPiece = {x, y};
 		}
 	},
 	mounted() {
 		// this.game.board.import('0b0b-bbbb-b000-0bbb-w0w0-w0w0-wwww-wwww');
 		//this.game.gameBoard.createBoard().setPiece(3, 6, 1).setPiece(2, 5, -1).setPiece(4, 5, -1).setPiece(2, 3, -1).setPiece(2, 1, -1).setPiece(4, 1, -1).setPiece(6, 7, 1).setPiece(4, 3, -1);
 
-		this.game.gameBoard.createBoard().setPiece(3, 4, 1).setPiece(2, 5, -1).setPiece(4, 3, -1).setPiece(6, 1, -1).setPiece(2, 3, -1).setPiece(4, 1, -1).setPiece(5, 6, 1);
+		this.game.gameBoard.createBoard().setPiece(3, 4, 1).setPiece(4, 3, -1).setPiece(6, 1, -1).setPiece(4, 1, -1).setPiece(4, 5, -1).setPiece(6, 5, -1);
+		this.game.initializeTurn();
 	}
 };
 </script>

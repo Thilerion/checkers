@@ -21,26 +21,68 @@ class Checkers {
 
 		this.currentPlayer = this.firstMove;
 
-		this.possibleMoves = [];
+		this.piecesWithAvailableMoves = [];
 		this.mustHit = false;
+		this.currentPaths = [];
 
-		this.initializeMove();
+		this.initializeTurn();
 	}
 
-	initializeMove() {
-		this.possibleMoves = this.gameBoard.getAllHitsOrMoves(this.currentPlayer);
+	initializeTurn() {
+		this.piecesWithAvailableMoves = this.gameBoard.getAllHitsOrMoves(this.currentPlayer, true);
+		
+		for (let i = 0; i < this.piecesWithAvailableMoves.length; i++) {
+			let move = this.piecesWithAvailableMoves[i];
+			if (move.mustHit && this.mustHit === false) this.mustHit = true;
+		}
+
+		if (this.mustHit) this.populatePaths();
+
 		return this;
 	}
 
-	finishMove() {
+	populatePaths() {
+		let paths = [];
 
+		this.piecesWithAvailableMoves.forEach(piece => {
+			piece.moves.forEach(initialMove => {
+				initialMove.paths.forEach(path => {
+					let reducedPath = path.map(p => {
+						return { x: p.x, y: p.y };
+					});
+					let curPath = [
+						piece.piece,
+						{ x: initialMove.x, y: initialMove.y },
+						...reducedPath
+					];
+					paths.push(curPath);
+				})
+			})
+		})
+		this.currentPaths = paths;
+		return this;
 	}
 
-	makeMove(x0, y0, x1, y1) {
+	finishTurn() {
+		this.piecesWithAvailableMoves = [];
+		this.mustHit = false;
+		this.currentPaths = [];
+		return this.nextPlayer().initializeTurn();
+	}
+
+	nextPlayer() {
+		this.currentPlayer = this.currentPlayer === PLAYER_BLACK ? PLAYER_WHITE : PLAYER_BLACK;
+
+		return this;
+	}
+
+	move(x0, y0, x1, y1) {
 		this.gameBoard.makeMove(x0, y0, x1, y1);
-		this.possibleMoves.filter(move => {
-			return move.x !== x0 && move.y !== y0;
-		});
+		this.finishTurn();
+	}
+
+	hit() {
+
 	}
 }
 
