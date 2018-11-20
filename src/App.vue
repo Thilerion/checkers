@@ -3,7 +3,10 @@
 		<div class="board">
 			<div class="row" v-for="(row, rowN) in grid" :key="rowN">
 				<SquareComponent v-for="square in row" :key="`${square.x},${square.y}`" :color="square.squareColor">
-					<PieceComponent @click.native="clickPiece(square.x, square.y)" :piece="board[square.y][square.x]" />
+					<!-- <div> -->
+						<span class="square-coords">{{square.x}},{{square.y}}</span>
+						<PieceComponent @click.native="clickPiece(square.x, square.y)" :piece="board[square.y][square.x]" />
+					<!-- </div> -->
 				</SquareComponent>
 			</div>
 		</div>
@@ -53,8 +56,9 @@ export default {
 	},
 	mounted() {
 		// this.game.board.import('0b0b-bbbb-b000-0bbb-w0w0-w0w0-wwww-wwww');
-		this.game.gameBoard.removePiece(2, 1);
-		console.log(this.game.gameBoard.getPossibleMoves(1, 2));
+		this.game.gameBoard.makeMove(1, 2, 2, 3).makeMove(4, 5, 3, 4)
+		console.log({ moves: this.game.gameBoard.getPossibleMoves(2, 3)});
+		console.log({ hits: this.game.gameBoard.getPossibleHits(2, 3)});
 	}
 };
 </script>
@@ -68,5 +72,13 @@ export default {
 .row {
 	display: flex;
 	flex-direction: row;
+}
+
+.square-coords {
+	position: absolute;
+	color: black;
+	background: rgb(255, 206, 206);
+	opacity: 0.7;
+	font-size: 12px;
 }
 </style>

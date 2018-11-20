@@ -110,6 +110,27 @@ class Board {
 		}, []);
 	}
 
+	getPossibleHits(x, y) {
+		return this.getValidDirections(x, y).reduce((acc, dir) => {
+			let x1 = dir.dx + x;
+			let y1 = dir.dy + y;
+			let squareToCapture = this.getPieceAt(x1, y1);
+
+			if (squareToCapture) {
+				let x2 = dir.dx + x1;
+				let y2 = dir.dy + y1;
+
+				let adjacentSquare = this.getPieceAt(x2, y2);
+
+				if (!adjacentSquare) {
+					let newDir = { x0: x, y0: y, x1: x2, y1: y2, captured: { x: x1, y: y1 } };
+					acc.push(newDir);
+				}
+			}
+			return acc;
+		}, [])
+	}
+
 	makeMove(x0, y0, x1, y1) {
 		let dx = x1 - x0;
 		let dy = y1 - y0;
