@@ -1,6 +1,13 @@
 import { PLAYER_BLACK, PLAYER_WHITE, RULES, PIECE_KING, PIECE_MAN, EMPTY_CELL, PIECES, SQUARE_TYPES } from './constants.js';
 import { coordsToIndex, indexToCoords } from './util-fns.js';
 
+const DIRECTIONS = [
+	{ dx: 1, dy: -1 },
+	{ dx: 1, dy: 1 },
+	{ dx: -1, dy: 1 },
+	{ dx: -1, dy: -1 }
+];
+
 class Checkers {
 	constructor(options = RULES) {
 		const { size, firstMove, captureBack, flyingKings } = options;
@@ -57,13 +64,24 @@ class Checkerboard {
 		}
 		return arr;
 	}
-}
 
-class Square {
-	constructor(x, y, color) {
-		this.squareColor = color;
-		this.x = x;
-		this.y = y;
+	isValidSquare(x, y) {
+		return (x >= 0 && x < this.size) && (y >= 0 && y < this.size) && this.grid[y][x].squareColor === SQUARE_TYPES.black;
+	}
+
+	getPieceAt(x, y) {
+		return this.pieces.find(p => p.x === x && p.y === y && p.alive);
+	}
+
+	getValidDirsFor(piece) {
+		if (!piece) return [];
+		return piece.getDirections().filter(dir => this.isValidSquare(dir.x, dir.y));
+	}
+
+	getValidMovesFor(x, y) {
+		let piece = this.getPieceAt(x, y);
+		let dirs = this.getValidDirsFor(piece).filter(d => d.forward).filter(d => !this.getPieceAt(d.x, d.y));
+		return dirs;
 	}
 }
 
@@ -89,6 +107,26 @@ class Piece {
 
 	isKing() {
 		return this.type === PIECE_KING;
+	}
+
+	getDirections() {
+		return DIRECTIONS.map(dir => {
+			let forward;
+			if (this.playerId === PLAYER_WHITE) {
+				forward = dir.dy < 0;
+			} else if (this.playerId === PLAYER_BLACK) {
+				forward = dir.dy > 0;
+			}
+			return { ...dir, x: dir.dx + this.x, y: dir.dy + this.y, forward };
+		});
+	}
+}
+
+class Square {
+	constructor(x, y, color) {
+		this.squareColor = color;
+		this.x = x;
+		this.y = y;
 	}
 }
 

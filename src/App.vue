@@ -3,7 +3,7 @@
 		<div class="board">
 			<div class="row" v-for="(row, rowN) in board" :key="rowN">
 				<SquareComponent v-for="square in row" :key="`${square.x},${square.y}`" :color="square.squareColor">
-					<PieceComponent :piece="pieceAt(square.x, square.y)" />
+					<PieceComponent @click.native="clickPiece(square.x, square.y)" :piece="pieceAt(square.x, square.y)" />
 				</SquareComponent>
 			</div>
 		</div>
@@ -42,6 +42,9 @@ export default {
 	methods: {
 		pieceAt(x, y) {
 			return this.pieces.find(p => p.x === x && p.y === y && p.alive);
+		},
+		clickPiece(x, y) {
+			console.log(this.game.board.getValidMovesFor(x, y));
 		}
 	}
 };
