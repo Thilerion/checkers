@@ -8,9 +8,9 @@ const PIECE_KING = 2;
 
 const EMPTY_CELL = " ";
 
-const CELL_TYPES = {
-	white: 1,
-	black: 2
+const SQUARE_TYPES = {
+	white: 'whiteSquare',
+	black: 'blackSquare'
 }
 
 const RULES = {
@@ -29,4 +29,4 @@ const PIECES = {
 
 RULES.size = 8;
 
-export { PLAYER_BLACK, PLAYER_WHITE, RULES, PIECE_KING, PIECE_MAN, PIECES, EMPTY_CELL, CELL_TYPES };
+export { PLAYER_BLACK, PLAYER_WHITE, RULES, PIECE_KING, PIECE_MAN, PIECES, EMPTY_CELL, SQUARE_TYPES };
