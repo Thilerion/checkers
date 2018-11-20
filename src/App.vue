@@ -68,6 +68,13 @@ export default {
 
 		// this.game.gameBoard.createBoard().setPiece(3, 4, 1).setPiece(4, 3, -1).setPiece(6, 1, -1).setPiece(4, 1, -1).setPiece(4, 5, -1).setPiece(6, 5, -1).setPiece(7, 0, 1);
 		// this.game.initializeTurn();
+		// this.game.hit(3, 4, 5, 6);
+		// this.game.move(5, 6, 4, 5);
+		// this.game.hit(7, 0, 5, 2);
+		// this.game.hit(5, 6, 7, 4);
+		// console.log(this.game.currentPlayer);
+		this.game.move(1, 6, 2, 5);
+		this.game.move(2, 5, 3, 4);
 	}
 };
 </script>
