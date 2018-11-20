@@ -152,12 +152,14 @@ class Checkerboard {
 
 			if (!movePiece && dir.forward) {
 				// empty square, and the direction is forward, so possible move
-				moves.push(dir);
+				moves.push({x: dir.x, y: dir.y});
 			} else if (movePiece && movePiece.playerId !== piece.playerId) {
 				// square has an opponent's piece, so maybe a hit direction
 				let hit = this.isHit(piece, dir);
-				if (hit) hits.push(hit);
-				// TODO: check hits recursive
+				if (hit) {
+					// TODO: check hits recursive
+					hits.push(hit);
+				}
 			}
 		}
 
@@ -166,19 +168,17 @@ class Checkerboard {
 
 	isHit(piece, dir) {
 		let hitDir = {
-			dx: dir.dx + dir.dx,
-			dy: dir.dy + dir.dy
+			x: piece.x + dir.dx + dir.dx,
+			y: piece.y + dir.dy + dir.dy
 		};
 
-		hitDir.x = piece.x + hitDir.dx;
-		hitDir.y = piece.y + hitDir.dy;
 		hitDir.length = dir.length == null ? 1 : dir.length + 1;
 
 		let adjacentPiece = this.getPieceAt(hitDir.x, hitDir.y);
 		if (!adjacentPiece) {
 			return hitDir;
 		}
-		return false;
+		return;
 	}
 }
 
