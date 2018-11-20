@@ -56,9 +56,11 @@ export default {
 	},
 	mounted() {
 		// this.game.board.import('0b0b-bbbb-b000-0bbb-w0w0-w0w0-wwww-wwww');
-		this.game.gameBoard.makeMove(1, 2, 2, 3).makeMove(4, 5, 3, 4)
-		console.log({ moves: this.game.gameBoard.getPossibleMoves(2, 3)});
-		console.log({ hits: this.game.gameBoard.getPossibleHits(2, 3)});
+		this.game.gameBoard.makeMove(1, 2, 2, 3).makeMove(4, 5, 3, 4).makeMove(0, 5, 1, 4).removePiece(6, 7);
+		this.game.gameBoard.removePiece(2, 7);
+		// console.log({ moves: this.game.gameBoard.getPossibleMoves(2, 3)});
+		// console.log({ hits: this.game.gameBoard.getPossibleHits(2, 3)});
+		console.log(this.game.gameBoard.getHitsOrMoves(2, 3));
 	}
 };
 </script>

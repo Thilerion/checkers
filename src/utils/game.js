@@ -102,8 +102,8 @@ class Board {
 			let getSquare = this.getPieceAt(x1, y1);
 
 			let newDir = {};
-			if (!getSquare) {
-				newDir = { ...dir, x0: x, y0: y, x1, y1 };
+			if (!getSquare && dir.forward) {
+				newDir = { x0: x, y0: y, x1, y1, captured: false };
 				acc.push(newDir);
 			}
 			return acc;
@@ -120,15 +120,50 @@ class Board {
 				let x2 = dir.dx + x1;
 				let y2 = dir.dy + y1;
 
-				let adjacentSquare = this.getPieceAt(x2, y2);
-
-				if (!adjacentSquare) {
+				if (this.isValidSquare(x2, y2) && !this.getPieceAt(x2, y2)) {
 					let newDir = { x0: x, y0: y, x1: x2, y1: y2, captured: { x: x1, y: y1 } };
 					acc.push(newDir);
 				}
 			}
 			return acc;
 		}, [])
+	}
+
+	getHitsOrMoves(x, y, mustHit = false) {
+		let hits = this.getPossibleHits(x, y);
+
+		if (hits.length < 1) {
+			if (mustHit) {
+				// return list of all captures
+				let captures = [];
+				for (let i = 0; i < this.history.length; i++) {
+					if (this.history[i].captured) {
+						captures.push(this.history[i].captured);
+					}
+				}
+				return captures;
+			} else {
+				let moves = this.getPossibleMoves(x, y);
+				return moves;
+			}
+		}
+
+		let board = this;
+		if (!mustHit) {
+			board = Board.copy(this);
+		}
+
+		let sequences = [];
+		
+		for (let i = 0; i < hits.length; i++) {
+			let hit = hits[i];
+			board.makeMove(hit.x0, hit.y0, hit.x1, hit.y1);
+
+			let sequence = JSON.parse(JSON.stringify(board.getHitsOrMoves(hit.x1, hit.y1, true)));
+			sequences.push(sequence);
+		}
+
+		return sequences;
 	}
 
 	makeMove(x0, y0, x1, y1) {
@@ -138,7 +173,7 @@ class Board {
 		let move = { x0, x1, y0, y1, capture: null };
 
 		if (Math.abs(dx) > 1 && Math.abs(dy) > 1) {
-			move.capture = { x: x0 + dx, y: y0 + dx, type: null};
+			move.capture = { x: x0 + (dx / 2), y: y0 + (dy / 2), type: null};
 			move.capture.type = this.getPieceAt(move.capture.x, move.capture.y);
 			this.removePiece(move.capture.x, move.capture.y);
 		}
