@@ -5,20 +5,19 @@
 </template>
 
 <script>
-import {PIECES} from '../utils/constants.js';
+import {PIECES, PLAYER_BLACK, PLAYER_WHITE} from '../utils/constants.js';
 
 export default {
 	props: ['piece'],
 	computed: {
 		pieceColor() {
-			if (this.piece < 0) {
+			if (this.piece.playerId === PLAYER_BLACK) {
 				return 'black';
-			} else return 'white';
+			} else if (this.piece.playerId === PLAYER_WHITE) return 'white';
 		},
 
 		isKing() {
-			if (Math.abs(this.piece) === 2) return true;
-			return false;
+			return this.piece.isKing();
 		}
 	}
 }

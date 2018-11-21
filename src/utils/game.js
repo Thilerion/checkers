@@ -139,6 +139,11 @@ class Checkers {
 		}
 		return this;
 	}
+
+	regenerateGrid() {
+		this.checkerBoard.createPieces(this.gameBoard.board);
+		return this;
+	}
 }
 
 class Board {

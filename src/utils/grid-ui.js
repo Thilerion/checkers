@@ -24,18 +24,19 @@ class Grid {
 	}
 	
 	findPiece(x, y) {
-		return this.pieces.find(piece => piece.x === x && piece.y === y);
+		return this.grid[y][x].piece;
 	}
 
 	createPieces(board) {
-		console.log(JSON.parse(JSON.stringify(board)));
 		for (let y = 0; y < board.length; y++) {
 			for (let x = 0; x < board[y].length; x++) {
 				let pieceId = board[y][x];
 				if (pieceId !== NO_PIECE) {
 					let playerId = pieceId < 0 ? PLAYER_BLACK : PLAYER_WHITE;
 					let type = Math.abs(pieceId);
-					this.pieces.push(new Piece(x, y, playerId, type));
+					this.grid[y][x].addPiece(new Piece(playerId, type));
+				} else {
+					this.grid[y][x].piece = null;
 				}
 			}
 		}
@@ -43,7 +44,9 @@ class Grid {
 	}
 
 	movePiece(x0, y0, x1, y1) {
-		this.findPiece(x0, y0).move(x1, y1);
+		const piece = this.grid[y0][x0].piece;
+		this.grid[y0][x0].piece = null;
+		this.grid[y1][x1].piece = piece;
 	}
 
 	capturePiece({ x, y }) {
@@ -52,17 +55,10 @@ class Grid {
 }
 
 class Piece {
-	constructor(x, y, playerId, type) {
+	constructor(playerId, type) {
 		this.type = type;
 		this.playerId = playerId;
 		this.alive = true;
-		this.x = x;
-		this.y = y;
-	}
-
-	move(x, y) {
-		this.x = x;
-		this.y = y;
 	}
 
 	capture() {
@@ -79,6 +75,12 @@ class Square {
 		this.squareColor = color;
 		this.x = x;
 		this.y = y;
+
+		this.piece = null;
+	}
+
+	addPiece(piece) {
+		this.piece = piece;
 	}
 }
 
