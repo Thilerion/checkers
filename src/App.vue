@@ -10,6 +10,10 @@
 					v-for="square in row"
 					:key="`${square.x},${square.y}`"
 					:square="square"
+					:selected="!!selected && selected.x === square.x && selected.y === square.y"
+					:canBeHit="availableHits.find(h => h.x === square.x && h.y === square.y)"
+					:canBeMovedTo="availableSquaresForMove.find(h => h.x === square.x && h.y === square.y)"
+					@click.native="select(square.x, square.y)"
 				>
 					<span class="square-coords">{{square.x}},{{square.y}}</span>
 
@@ -49,10 +53,31 @@ export default {
 		},
 		size() {
 			return this.game.size;
+		},
+		selected() {
+			return this.game.selected;
+		},
+		pathsForSelection() {
+			if (!this.selected) return [];
+			return this.game.getPathsForPiece(this.selected.x, this.selected.y);
+		},
+		availableSquaresForMove() {
+			return this.pathsForSelection.reduce((squares, path) => {
+				squares.push(...path);
+				return squares;
+			}, []);
+		},
+		availableHits() {
+			return this.availableSquaresForMove.reduce((hits, square) => {
+				if (square.captured) {
+					hits.push(square.captured);
+				}
+				return hits;
+			}, []);
 		}
 	},
 	methods: {
-		selectPiece(x, y) {
+		select(x, y) {
 			this.game.select(x, y);
 		}
 	},

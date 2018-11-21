@@ -10,20 +10,16 @@
 import {SQUARE_TYPES} from '../utils/constants.js';
 
 export default {
-	props: ['square'],
+	props: ['square', 'selected', 'canBeHit', 'canBeMovedTo'],
 	data() {
 		return {
 			color: this.square.squareColor
 		}
 	},
 	computed: {
-		selected() {
-			return this.square.selected;
-		},
 		possibleMoveClass() {
-			if (this.square.isPossiblePrimaryMove) return 'primary-move';
-			else if (this.square.isPossibleNextMove) return 'next-move';
-			else if (this.square.isPossibleHit) return 'possible-hit';
+			if (this.canBeMovedTo) return 'possible-move';
+			else if (this.canBeHit) return 'possible-hit';
 			else return;
 		},
 		typeClass() {
@@ -62,15 +58,11 @@ export default {
 	border: 3px solid blue;
 }
 
-.primary-move {
-	background: rgb(89, 107, 168);
-}
-
-.next-move {
-	background: rgb(89, 107, 168);
+.possible-move {
+	border: 3px solid rgb(76, 76, 255);
 }
 
 .possible-hit {
-	background: rgba(89, 107, 168, 0.5);
+	border: 3px solid red;
 }
 </style>

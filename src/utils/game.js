@@ -21,6 +21,7 @@ class Checkers {
 		this.checkerBoard = new Grid(this.size).createPieces(this.gameBoard.board);
 
 		this.currentPlayer = this.firstMove;
+		this.selected = null;
 
 		this.currentPaths = [];
 
@@ -41,6 +42,7 @@ class Checkers {
 
 	finishTurn() {
 		this.currentPaths = [];
+		this.selected = null;
 		return this.nextPlayer().initializeTurn();
 	}
 
@@ -108,6 +110,7 @@ class Checkers {
 		}
 
 		this.gameBoard.makeMove(x0, y0, x1, y1);
+		this.updateSelection(x1, y1);
 
 		const isHit = this.isHit(x0, y0, x1, y1);
 		this.updateGrid(x0, y0, x1, y1, isHit);
@@ -143,6 +146,24 @@ class Checkers {
 	regenerateGrid() {
 		this.checkerBoard.createPieces(this.gameBoard.board);
 		return this;
+	}
+
+	updateSelection(x, y) {
+		this.selected = { x, y };
+	}
+
+	select(x, y) {
+		if (this.selected !== null && this.selected.x === x && this.selected.y === y) {
+			//deselect
+			this.selected = null;
+			return this;
+		}
+		
+		if (!this.isPieceSelectable(x, y)) {
+			return this;
+		}
+
+		this.selected = { x, y };
 	}
 }
 
