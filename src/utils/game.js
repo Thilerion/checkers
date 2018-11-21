@@ -158,6 +158,11 @@ class Checkers {
 			this.selected = null;
 			return this;
 		}
+
+		if (this.selected !== null && this.isValidMove(this.selected.x, this.selected.y, x, y)) {
+			this.move(this.selected.x, this.selected.y, x, y);
+			return this;
+		}
 		
 		if (!this.isPieceSelectable(x, y)) {
 			return this;
