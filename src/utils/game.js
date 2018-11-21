@@ -20,14 +20,36 @@ class Checkers {
 
 		this.currentPlayer = this.firstMove;
 
-		this.mustHit = false;
 		this.currentPaths = [];
-		this.possiblePieces = [];
 
 		this.initializeTurn();
 	}
 
-	getPossiblePathsForPiece(x, y) {
+	initializeTurn() {
+		let turnOptions = this.gameBoard.getAllHitsOrMoves(this.currentPlayer, true);
+		this.currentPaths = turnOptions;
+		return this;
+	}
+
+	finishTurn() {
+		this.currentPaths = [];
+		return this.nextPlayer().initializeTurn();
+	}
+
+	nextPlayer() {
+		this.currentPlayer = this.currentPlayer === PLAYER_BLACK ? PLAYER_WHITE : PLAYER_BLACK;
+		return this;
+	}
+
+	getMoveOptionsForPiece(x, y) {
+		return this.currentPaths.find(path => path.piece.x === x && path.piece.y === y);
+	}
+
+	isPieceSelectable(x, y) {
+		return !!this.getMoveOptionsForPiece(x, y);
+	}
+
+	/*getPossiblePathsForPiece(x, y) {
 		return this.currentPaths.filter(path => {
 			return path[0].x === x && path[0].y === y;
 		})
@@ -222,7 +244,7 @@ class Checkers {
 		this.checkerBoard.updatePossibleMovesHits(primMoves, nextMoves, possibleHits);
 
 		return this;
-	}
+	}*/
 }
 
 class Board {
@@ -357,8 +379,7 @@ class Board {
 							moves,
 							mustHit: moves[0].hit
 						});
-					}
-					
+					}					
 				}
 			}
 		}
