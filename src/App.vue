@@ -23,12 +23,16 @@
 				</SquareComponent>
 			</div>
 		</div>
+		<p>Current player: {{currentPlayer}}</p>
+		<h2>Pieces Left</h2>
+		<p>White: {{whitePiecesLeft}}</p>
+		<p>Black: {{blackPiecesLeft}}</p>
 	</div>
 </template>
 
 <script>
 import {Checkers} from './utils/game.js';
-import {PIECES, SQUARE_TYPES, PLAYER_WHITE} from './utils/constants.js';
+import {PIECES, SQUARE_TYPES, PLAYER_WHITE, PLAYER_BLACK} from './utils/constants.js';
 
 import SquareComponent from './components/Square.vue';
 import PieceComponent from './components/Piece.vue';
@@ -74,6 +78,15 @@ export default {
 				}
 				return hits;
 			}, []);
+		},
+		whitePiecesLeft() {
+			return this.game.gameBoard.piecesLeft[PLAYER_WHITE];
+		},
+		blackPiecesLeft() {
+			return this.game.gameBoard.piecesLeft[PLAYER_BLACK];
+		},
+		currentPlayer() {
+			return this.game.currentPlayer === PLAYER_BLACK ? "Black" : "White";
 		}
 	},
 	methods: {

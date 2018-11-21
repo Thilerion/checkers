@@ -25,17 +25,17 @@ class Checkers {
 
 		this.currentPaths = [];
 
+		this.piecesLeft = {};
+
 		this.initializeTurn();
 	}
 
 	initializeTurn() {
 		let turnOptions = this.gameBoard.getAllPieceOptions(this.currentPlayer);
-		console.log(JSON.parse(JSON.stringify({turnOptions})));
 
 		let filteredMoves = this.gameBoard.filterMovesIfMustHit(turnOptions);
 		let filteredLengths = this.gameBoard.filterSmallPaths(filteredMoves);
 
-		console.log(JSON.parse(JSON.stringify({ filteredLengths })));
 		this.currentPaths = filteredLengths;
 		return this;
 	}
@@ -177,6 +177,8 @@ class Board {
 		this.size = size;
 		this.board = [];
 
+		this.piecesLeft = {};
+
 		this.history = [];
 	}
 
@@ -209,15 +211,27 @@ class Board {
 		return this;
 	}
 
+	updatePiecesAmount() {
+		this.piecesLeft = this.board.reduce((acc, row) => {
+			row.forEach(piece => {
+				if (piece < 0) acc[PLAYER_BLACK]++;
+				else if (piece > 0) acc[PLAYER_WHITE]++;
+			});
+			return acc;
+		}, { [PLAYER_BLACK]: 0, [PLAYER_WHITE]: 0 });
+		return this;
+	}
+
 	removePiece(x, y) {
 		let piece = this.getPieceAt(x, y);
 		this.board[y].splice(x, 1, NO_PIECE);
+		this.updatePiecesAmount();
 		return piece;
 	}
 
 	setPiece(x, y, piece) {
 		this.board[y].splice(x, 1, piece);
-		return this;
+		return this.updatePiecesAmount();;
 	}
 
 	getPieceAt(x, y) {
@@ -409,8 +423,6 @@ class Board {
 		pieces.forEach(piece => piece.paths.forEach(path => {
 			longestPath = Math.max(path.length, longestPath);
 		}));
-
-		console.log({ longestPath });
 
 		return pieces.reduce((acc, piece) => {
 			piece.paths = piece.paths.reduce((pathAcc, path) => {
