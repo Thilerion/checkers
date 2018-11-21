@@ -26,8 +26,14 @@ class Checkers {
 	}
 
 	initializeTurn() {
-		let turnOptions = this.gameBoard.getAllHitsOrMoves(this.currentPlayer, true);
-		this.currentPaths = turnOptions;
+		let turnOptions = this.gameBoard.getAllPieceOptions(this.currentPlayer);
+		console.log(JSON.parse(JSON.stringify({turnOptions})));
+
+		let filteredMoves = this.gameBoard.filterMovesIfHits(turnOptions);
+		let filteredLengths = this.gameBoard.filterSmallPaths(filteredMoves);
+
+		console.log(JSON.parse(JSON.stringify({ filteredLengths })));
+		this.currentPaths = filteredLengths;
 		return this;
 	}
 
@@ -41,105 +47,31 @@ class Checkers {
 		return this;
 	}
 
-	getMoveOptionsForPiece(x, y) {
-		return this.currentPaths.find(path => path.piece.x === x && path.piece.y === y);
+	getPathsForPiece(x, y) {
+		let piecePaths = this.currentPaths.find(piecePath => piecePath.piece.x === x && piecePath.piece.y === y);
+		if (!piecePaths) return;
+		else return piecePaths.paths;
+	}
+
+	getNextMovesForPiece(x, y) {
+		let paths = this.getPathsForPiece(x, y);
+		if (!paths) return;
+
+		return paths.map(path => path[0]);
+	}
+
+	isValidMove(x0, y0, x1, y1) {
+		let nextMoves = this.getNextMovesForPiece(x0, y0);
+		if (!nextMoves) return false;
+
+		return !!nextMoves.find(move => move.x === x1 && move.y === y1);
 	}
 
 	isPieceSelectable(x, y) {
-		return !!this.getMoveOptionsForPiece(x, y);
+		return !!this.getPathsForPiece(x, y);
 	}
 
-	/*getPossiblePathsForPiece(x, y) {
-		return this.currentPaths.filter(path => {
-			return path[0].x === x && path[0].y === y;
-		})
-	}
-
-	initializeTurn() {
-		let hitsAndMoves = this.gameBoard.getAllHitsOrMoves(this.currentPlayer, true);
-		
-		for (let i = 0; i < hitsAndMoves.length; i++) {
-			let move = hitsAndMoves[i];
-			if (move.mustHit && this.mustHit === false) this.mustHit = true;
-		}
-
-		if (this.mustHit) {
-			this.populatePathsMustHit(hitsAndMoves);
-		} else {
-			this.populatePathsMoves(hitsAndMoves);
-		}
-
-		this.populatePossiblePieces();
-
-		return this;
-	}
-
-	populatePossiblePieces() {
-		this.possiblePieces = [...new Set(this.currentPaths.map(path => path[0]))];
-		return this;
-	}
-
-	populatePathsMustHit(hits) {
-		let paths = [];
-
-		hits.forEach(piece => {
-			piece.moves.forEach(initialMove => {
-				initialMove.paths.forEach(path => {
-					let reducedPath = path.map(p => {
-						return { x: p.x, y: p.y };
-					});
-					let curPath = [
-						piece.piece,
-						...reducedPath
-					];
-					paths.push(curPath);
-				})
-			})
-		})
-		this.currentPaths = paths;
-		return this;
-	}
-
-	populatePathsMoves(moves) {
-		let paths = [];
-
-		moves.forEach(piece => {
-			let reducedMoves = piece.moves.map(move => {
-				return { x: move.x, y: move.y };
-			})
-			reducedMoves.forEach(move => {
-				let curMove = [
-					piece.piece,
-					move
-				];			
-				paths.push(curMove);
-			})
-		})
-		this.currentPaths = paths;
-		return this;
-	}
-
-	finishTurn() {
-		this.mustHit = false;
-		this.currentPaths = [];
-		this.possiblePieces = [];
-		return this.nextPlayer().initializeTurn();
-	}
-
-	nextPlayer() {
-		this.currentPlayer = this.currentPlayer === PLAYER_BLACK ? PLAYER_WHITE : PLAYER_BLACK;
-
-		return this;
-	}
-
-	isMoveValidPath(x0, y0, x1, y1) {
-		return this.currentPaths.find(path => {
-			let validStartPiece = path[0].x === x0 && path[0].y === y0;
-			let validMovement = path[1].x === x1 && path[1].y === y1;
-			return validStartPiece && validMovement;
-		})
-	}
-
+	/*
 	move(x0, y0, x1, y1) {
 		//TODO: check if move or hit in currentPath
 		if (!this.isMoveValidPath(x0, y0, x1, y1)) {
@@ -308,8 +240,9 @@ class Board {
 		return (x >= 0 && x < this.size) && (y >= 0 && y < this.size) && ((x + y) % 2 === 1);
 	}
 
-	//	only checks if a square exists in that direction, if it is a black square,
-	//		and adds if it is forward or not
+	// Check all directions around square, and returns those that are valid
+	// Also adds if it is forward or not (normally pieces can't move backwards)
+	// Returns: Array of Objects {dx: +-1, dy: +-1, forward: Boolean}
 	getValidDirections(x, y) {
 		return DIRECTIONS.filter(dir => {
 			let x1 = dir.dx + x;
@@ -325,150 +258,180 @@ class Board {
 		})
 	}
 
-	getPossibleMoves(x, y) {
-		return this.getValidDirections(x, y).reduce((acc, dir) => {
+	// Loop over validDirections, returning only those where the square is empty
+	// Also checks if it is forward or not
+	// Returns: Array of Objects with locations to which can be moved {x, y}
+	getPieceMoves(x, y) {
+		return this.getValidDirections(x, y).reduce((moves, dir) => {
 			let x1 = dir.dx + x;
 			let y1 = dir.dy + y;
-			let getSquare = this.getPieceAt(x1, y1);
+			let nextSquare = this.getPieceAt(x1, y1);
 
-			let newDir = {};
-			if (!getSquare && dir.forward) {
-				newDir = { x: x1, y: y1, hit: false };
-				acc.push(newDir);
+			if (!nextSquare && dir.forward) {
+				// No piece on that square, and it is the right directions, so add to array
+				moves.push({ x: x1, y: y1 });
 			}
-			return acc;
+			return moves;
 		}, []);
 	}
 
-	getPossibleHits(x, y) {
-		let myPiece = this.getPieceAt(x, y);
+	// Loop over valid directions, returning only those where the square is inhabited
+	//		by enemy piece, and the square beyond is empty and valid
+	// Returns: Array of Objects with locations to which can be moved by hitting
+	//		along with captured piece location { x, y, captured: {x, y} }
+	getPieceHits(x, y) {
+		let curPlayer = this.getPiecePlayer(this.getPieceAt(x, y));
 
-		return this.getValidDirections(x, y).reduce((acc, dir) => {
+		return this.getValidDirections(x, y).reduce((hits, dir) => {
 			let x1 = dir.dx + x;
 			let y1 = dir.dy + y;
-			let squareToCapture = this.getPieceAt(x1, y1);
+			let nextSquare = this.getPieceAt(x1, y1);
 
-			if (squareToCapture && this.getPiecePlayer(myPiece) !== this.getPiecePlayer(squareToCapture)) {
+			// Check if nextSquare has enemy piece
+			if (nextSquare && curPlayer !== this.getPiecePlayer(nextSquare)) {
+				// Check if next square is empty
 				let x2 = dir.dx + x1;
 				let y2 = dir.dy + y1;
 
 				if (this.isValidSquare(x2, y2) && !this.getPieceAt(x2, y2)) {
-					let newDir = { x0: x, y0: y, x1: x2, y1: y2, captured: { x: x1, y: y1 } };
-					acc.push(newDir);
+					// TODO: is the captured property necessary?
+					hits.push({ x: x2, y: y2, captured: { x: x1, y: y1 } });
 				}
 			}
-			return acc;
+			return hits;
 		}, [])
 	}
 
-	getAllHitsOrMoves(player, mustHitIfPossible = true) {
-		let mustHit = false;
-		let pieces = [];
+	// Checks both getPieceMoves and getPieceHits for possibilities (if a hit is found, only hits are returned)
+	// This can then be sent to a recursive checker method for all hits
+	// Returns: Array of all possible moves and paths that can be taken, with moves
+	//				having a captured: null, and hits having a captured: {x, y}
+	getPieceOptions(x, y) {
+		let hits = this.getPieceHits(x, y);
 
-		for (let y = 0; y < this.size; y++) {
-			for (let x = 0; x < this.size; x++) {
-				let piece = this.board[y][x];
-				if (this.getPiecePlayer(piece) === player) {
-					let moves = this.getHitsOrMovesForPiece(x, y, true);
-					if (moves.length > 0) {
-						if (moves[0].hit) mustHit = true;
-						pieces.push({
-							piece: {
-								x, y
-							},
-							moves,
-							mustHit: moves[0].hit
-						});
-					}					
-				}
-			}
-		}
-		
-		if (mustHitIfPossible && mustHit) {
-			return pieces.filter(p => {
-				return p.mustHit;
+		if (hits.length <= 0) {
+			let moveObjects = this.getPieceMoves(x, y);
+			return moveObjects.map(move => {
+				return [{...move, captured: null}];
 			});
-		}
-
-		return pieces;
-	}
-
-	getHitsOrMovesForPiece(x, y, onlyLongest = true) {
-		let hits = this.getPossibleHits(x, y);
-
-		if (hits.length < 1) {
-			let moves = this.getPossibleMoves(x, y);
-			return moves;
 		}
 
 		let board = Board.copy(this);
 
-		let longestPath = 1;
-
-		let sequences = hits.map(hit => {
-			board.makeMove(hit.x0, hit.y0, hit.x1, hit.y1);
-
-			let curSeqs = JSON.parse(JSON.stringify(board.recursiveHitSequences(hit.x1, hit.y1)));
+		// Hits were found, so now to loop over all hits, and check for any subsequent hits
+		let pathsForPiece = [];
+		hits.forEach(hit => {
+			board.makeMove(x, y, hit.x, hit.y);
+			
+			let nextHits = JSON.parse(JSON.stringify(board.getSubsequentHits(hit.x, hit.y)));
+			pathsForPiece.push(...nextHits);
 
 			board.undoMove();
-			
-			// console.log({ firstMove: {x: hit.x1, y: hit.y1}, curSeqs });
-			for (let i = 0; i < curSeqs.length; i++) {
-				longestPath = Math.max(longestPath, curSeqs[i].length);
-			}
-
-			return { x: hit.x1, y: hit.y1, paths: curSeqs, hit: true };
 		})
-
-		// console.log("Returning all sequences at the start: ", sequences);
-
-		if (onlyLongest) {
-			// finds all paths that are the longest, discards the rest
-			// then finds all initial moves with a path that is among the longest
-			return sequences.reduce((acc, seq) => {
-				let newPaths = seq.paths.filter(path => {
-					return path.length >= longestPath;
-				})
-				if (newPaths.length < 1) return acc;
-				else {
-					acc.push({ ...seq, paths: newPaths });
-					return acc;
-				}
-			}, [])
-		}
-
-		return sequences;
+		return pathsForPiece;
 	}
 
-	recursiveHitSequences(x, y) {
-		let hits = this.getPossibleHits(x, y);
+	// Checks for any subsequent hits, and if none are found returns the board history
+	getSubsequentHits(x, y) {
+		let hits = this.getPieceHits(x, y);
 
-		if (hits.length < 1) {
-			// return next positions after hits in history
-			let movements = this.history.reduce((moves, move) => {
-				if (move.capture) {
-					moves.push(JSON.parse(JSON.stringify({x: move.x1, y: move.y1})))
-				}
-				return moves;
-			}, []);
-			// console.log("Returning captures at end of chain: ", captures);
-			return [movements];
+		if (hits.length <= 0) {
+			let history = this.reduceHistory(this.history);
+			return [history];
 		}
 
-		let sequences = [];
-		for (let i = 0; i < hits.length; i++) {
-			let hit = hits[i];
-			this.makeMove(hit.x0, hit.y0, hit.x1, hit.y1);
+		let paths = [];
+		hits.forEach(hit => {
+			// For each hit that was found, check for next hits and add a path for this chain
+			this.makeMove(x, y, hit.x, hit.y);
 
-			let sequence = JSON.parse(JSON.stringify(this.recursiveHitSequences(hit.x1, hit.y1)));
-
-			sequences.push(...sequence);
+			// Make recursive call here, and for each found add to array
+			let nextPaths = this.getSubsequentHits(hit.x, hit.y);
+			// TODO: iterate over paths?
+			paths.push(...nextPaths);
 
 			this.undoMove();
+		})
+		return paths;
+	}
+
+	reduceHistory(history) {
+		return history.reduce((moves, move) => {
+			if (move.capture) {
+				moves.push({
+					x: move.x1,
+					y: move.y1,
+					captured: {
+						x: move.capture.x,
+						y: move.capture.y
+					}
+				});
+			}
+			return moves;
+		}, []);
+	}
+
+	getAllPieceOptions(player) {
+		let playerPieces = [];
+
+		for (let y = 0; y < this.size; y++) {
+			for (let x = 0; x < this.size; x++) {
+				let piece = this.board[y][x];
+				if (this.getPiecePlayer(piece) !== player) continue;
+
+				let moves = this.getPieceOptions(x, y);
+				if (moves.length <= 0) continue;
+
+				playerPieces.push({
+					piece: { x, y },
+					paths: moves
+				});
+			}
+		}
+		return playerPieces;
+	}
+
+	// accepts the return value from getAllPieceOptions, and returns all hits if a hit was found, or everything (if no hit was found)
+	filterMovesIfHits(pieces) {
+		// The getPieceOptions method returns only hits or only moves, so only one path has to be checked for every piece
+		let mustHit = false;
+		for (let i = 0; i < pieces.length; i++) {
+			if (pieces[i].paths[0][0].captured !== null) {
+				mustHit = true;
+				break;
+			}
 		}
 
-		// console.log("Returning sequences in middle of chain: ", sequences);
-		return sequences;
+		if (!mustHit) return pieces;
+		return pieces.filter(piece => {
+			return piece.paths[0][0].captured !== null;
+		});
+	}
+
+	// accepts the return value from getAllPieceOptions (or the above filter)
+	// returns all hit paths that are as long as the longest path
+	filterSmallPaths(pieces) {
+		let longestPath = 0;
+
+		pieces.forEach(piece => piece.paths.forEach(path => {
+			longestPath = Math.max(path.length, longestPath);
+		}));
+
+		console.log({ longestPath });
+
+		return pieces.reduce((acc, piece) => {
+			piece.paths = piece.paths.reduce((pathAcc, path) => {
+				if (path.length < longestPath) return pathAcc;
+				else {
+					pathAcc.push(path);
+					return pathAcc;
+				}
+			}, []);
+			if (piece.paths.length > 0) {
+				acc.push(piece);
+			}
+			return acc;
+		}, [])
 	}
 
 	makeMove(x0, y0, x1, y1) {

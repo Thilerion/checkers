@@ -57,7 +57,7 @@ export default {
 		}
 	},
 	mounted() {
-		this.game.gameBoard.createBoard().setPiece(3, 4, 1).setPiece(4, 3, -1).setPiece(6, 1, -1).setPiece(4, 1, -1).setPiece(4, 5, -1).setPiece(6, 5, -1).setPiece(7, 0, 1);
+		this.game.gameBoard.createBoard().setPiece(3, 4, 1).setPiece(4, 3, -1).setPiece(6, 1, -1).setPiece(4, 1, -1).setPiece(4, 5, -1).setPiece(1, 6, 1).setPiece(2, 1, -1).setPiece(2,3, -1);
 		this.game.initializeTurn();
 	}
 };
