@@ -52,6 +52,10 @@ class Grid {
 	capturePiece({ x, y }) {
 		this.findPiece(x, y).capture();
 	}
+
+	crownPiece(x, y) {
+		this.findPiece(x, y).crown();
+	}
 }
 
 class Piece {
@@ -67,6 +71,12 @@ class Piece {
 
 	isKing() {
 		return this.type === PIECE_KING;
+	}
+
+	crown() {
+		if (!this.isKing()) {
+			this.type = PIECE_KING;
+		}
 	}
 }
 

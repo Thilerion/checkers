@@ -146,7 +146,12 @@ class Checkers {
 			console.log("No more hits are available, so finishing this turn.");
 		}
 
-		// if not hit, end turn
+		// check if piece must be crowned after the final move of the turn
+		let mustCrown = this.gameBoard.checkCrown(x1, y1);
+		if (mustCrown) {
+			this.checkerBoard.crownPiece(x1, y1);
+		}
+
 		return this.finishTurn();
 	}
 
@@ -239,6 +244,29 @@ class Board {
 			return acc;
 		}, { [PLAYER_BLACK]: 0, [PLAYER_WHITE]: 0 });
 		return this;
+	}
+
+	isKing(x, y) {
+		if (Math.abs(this.getPieceAt(x, y)) > 1) return true;
+		return false;
+	}
+
+	checkCrown(x, y) {
+		let piece = this.getPieceAt(x, y);
+		let player = this.getPiecePlayer(piece);
+		
+		if (this.isKing(x, y)) return false;
+
+		if ((player === PLAYER_WHITE && y === 0) ||
+			(player === PLAYER_BLACK && y === this.size - 1)) {
+			this.crownPiece(x, y, piece);
+			return true;
+		}
+		return false;
+	}
+
+	crownPiece(x, y, piece) {
+		this.board[y].splice(x, 1, (piece * 2));
 	}
 
 	removePiece(x, y) {
