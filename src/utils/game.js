@@ -1,5 +1,4 @@
 import { PLAYER_BLACK, PLAYER_WHITE, RULES, PIECE_KING, PIECE_MAN, NO_PIECE, PIECES, SQUARE_TYPES } from './constants.js';
-import { coordsToIndex, indexToCoords } from './util-fns.js';
 
 const DIRECTIONS = [
 	{ dx: 1, dy: -1 },
