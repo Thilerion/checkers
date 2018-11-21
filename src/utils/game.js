@@ -112,7 +112,7 @@ class Checkers {
 	}
 
 	isMoveValidPath(x0, y0, x1, y1) {
-		return !!this.currentPaths.find(path => {
+		return this.currentPaths.find(path => {
 			let validStartPiece = path[0].x === x0 && path[0].y === y0;
 			let validMovement = path[1].x === x1 && path[1].y === y1;
 			return validStartPiece && validMovement;
@@ -174,7 +174,17 @@ class Checkers {
 		if (this.canPieceMove(x, y)) {
 			this.checkerBoard.selectSquare(x, y);
 			return this.updateSquaresPossibleMovesAndHits();
-		} else {
+		} else if (this.checkerBoard.selected) {			
+			let selX = this.checkerBoard.selected.x;
+			let selY = this.checkerBoard.selected.y;
+			let path = this.isMoveValidPath(selX, selY, x, y);
+			if (!!path) {
+				if (Math.abs(path[0].x + path[1].x) / 2 > 1) {
+					this.hit(selX, selY, x, y);
+				} else {
+					this.move(selX, selY, x, y);
+				}
+			}
 			return this;
 		}
 	}

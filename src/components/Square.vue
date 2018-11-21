@@ -63,14 +63,14 @@ export default {
 }
 
 .primary-move {
-	background: rgba(62, 62, 124, 1);
+	background: rgb(89, 107, 168);
 }
 
 .next-move {
-	background: rgb(98, 98, 150);
+	background: rgb(89, 107, 168);
 }
 
 .possible-hit {
-	background: rgba(106, 62, 124, 0.5);
+	background: rgba(89, 107, 168, 0.5);
 }
 </style>

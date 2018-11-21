@@ -34,6 +34,8 @@ export default {
 	justify-content: center;
 	align-items: center;
 	box-shadow: 1px 1px 4px -2px black;
+	position: relative;
+	z-index: 10;
 }
 
 .piece.black {
