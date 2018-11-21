@@ -29,7 +29,7 @@ class Checkers {
 		let turnOptions = this.gameBoard.getAllPieceOptions(this.currentPlayer);
 		console.log(JSON.parse(JSON.stringify({turnOptions})));
 
-		let filteredMoves = this.gameBoard.filterMovesIfHits(turnOptions);
+		let filteredMoves = this.gameBoard.filterMovesIfMustHit(turnOptions);
 		let filteredLengths = this.gameBoard.filterSmallPaths(filteredMoves);
 
 		console.log(JSON.parse(JSON.stringify({ filteredLengths })));
@@ -71,112 +71,57 @@ class Checkers {
 		return !!this.getPathsForPiece(x, y);
 	}
 
-	/*
-	move(x0, y0, x1, y1) {
-		//TODO: check if move or hit in currentPath
-		if (!this.isMoveValidPath(x0, y0, x1, y1)) {
-			console.warn(`Can't move ${x0},${y0} to ${x1},${y1} as it is not a valid path.`);
+	isHit(x0, y0, x1, y1) {
+		return Math.abs(x0 - x1) > 1 && Math.abs(y0 - y1) > 1;
+	}
+
+	shortenCurrentPaths(x0, y0, x1, y1) {
+		const piece = { x: x1, y: y1 };
+		// First filter to get only paths that start with the move currently being made
+		// Then remove that move from the path, shortening it by 1
+		const paths = this.getPathsForPiece(x0, y0).filter(path => {
+			return path[0].x === x1 && path[0].y === y1;
+		}).map(path => path.slice(1));
+
+		if (paths[0].length < 1) {
+			console.log("No more options are left for this move, as the paths array is empty.");
+			this.currentPaths = [];
 			return this;
 		}
-		
+
+		console.log({ newPaths: paths });
+		this.currentPaths = [
+			{
+				piece,
+				paths
+			}
+		];
+		return this;
+	}
+
+	move(x0, y0, x1, y1) {
+		if (!this.isValidMove(x0, y0, x1, y1)) {
+			console.warn(`Can't move piece ${x0},${y0} to ${x1},${y1} as it is an invalid move.`);
+			return this;
+		}
+
 		this.gameBoard.makeMove(x0, y0, x1, y1);
+
+		// if hit, shorten paths, check if more hits possible
+		if (this.isHit(x0, y0, x1, y1)) {
+			console.log("Move is a hit, now modifying the currentPaths array to check if more hits are possible");
+			
+			this.shortenCurrentPaths(x0, y0, x1, y1);
+			if (this.currentPaths.length > 0) {
+				console.log("There are other hits that must be made.");
+				return this;
+			}
+			console.log("No more hits are available, so finishing this turn.");
+		}
+
+		// if not hit, end turn
 		return this.finishTurn();
 	}
-
-	hit(x0, y0, x1, y1) {
-		//TODO: check if move or hit in currentPath
-		if (!this.isMoveValidPath(x0, y0, x1, y1)) {
-			console.warn(`Can't move ${x0},${y0} to ${x1},${y1} as it is not a valid path.`);
-			return this;
-		}
-
-		this.gameBoard.makeMove(x0, y0, x1, y1);
-
-		this.currentPaths = this.currentPaths.filter(path => {
-			return path[0].x === x0 && path[0].y === y0 && path[1].x === x1 && path[1].y === y1;
-		}).map(path => {
-			return path.slice(1);
-		})
-		
-		// TODO: maybe check every path for their length? shouldn't be necessary because all paths should have been only the largest
-		if (this.currentPaths.length <= 0 || this.currentPaths[0].length <= 1) {
-			this.deselect();
-			return this.finishTurn();
-		} else {
-			console.warn("This was not the last hit in the path, another capture is required.");
-			this.populatePossiblePieces();
-
-			if (this.checkerBoard.selected.x === x0 && this.checkerBoard.selected.y === y0) {
-				this.select(x1, y1);
-			} else {
-				console.warn("Won't select next square because the currently moving piece was not selected either.");
-			}
-			return this;
-		}
-	}
-
-	canPieceMove(x, y) {
-		return !!this.possiblePieces.find(piece => piece.x === x && piece.y === y);
-	}
-
-	select(x, y) {
-		// called by selecting someting
-		// also called onHit, to select where the piece has moved to
-		// call checkerBoard.select
-		// call this updateSquarePossibleMovesAndHits
-		if (this.canPieceMove(x, y)) {
-			this.checkerBoard.selectSquare(x, y);
-			return this.updateSquaresPossibleMovesAndHits();
-		} else if (this.checkerBoard.selected) {			
-			let selX = this.checkerBoard.selected.x;
-			let selY = this.checkerBoard.selected.y;
-			let path = this.isMoveValidPath(selX, selY, x, y);
-			if (!!path) {
-				if (Math.abs(path[0].x + path[1].x) / 2 > 1) {
-					this.hit(selX, selY, x, y);
-				} else {
-					this.move(selX, selY, x, y);
-				}
-			}
-			return this;
-		}
-	}
-
-	deselect() {
-		// called by finishTurn and after each hit with more hits to come
-		// calls checkerBoard.deselect
-		this.checkerBoard.deselectSquare();
-		return this;
-	}
-
-	updateSquaresPossibleMovesAndHits() {
-		// called on select
-		let selected = this.checkerBoard.selected;
-		if (!selected) return this;
-		let paths = [...this.currentPaths].filter(path => {
-			return path[0].x === selected.x && path[0].y === selected.y;
-		});
-
-		let { primMoves, nextMoves, possibleHits } = paths.reduce((acc, path) => {
-			for (let i = 1; i < path.length; i++) {
-				if (i === 1) acc.primMoves.push({ ...path[i] });
-				else {
-					acc.nextMoves.push({ ...path[i] });
-				}
-
-				let dx = Math.abs(path[i - 1].x - path[i].x);
-				let dy = Math.abs(path[i - 1].y - path[i].y);
-				if (dx > 1 && dy > 1) {
-					acc.possibleHits.push({x: (path[i - 1].x + path[i].x) / 2, y: (path[i - 1].y + path[i].y) / 2})
-				}
-			}
-			return acc;
-		}, { primMoves: [], nextMoves: [], possibleHits: [] });
-
-		this.checkerBoard.updatePossibleMovesHits(primMoves, nextMoves, possibleHits);
-
-		return this;
-	}*/
 }
 
 class Board {
@@ -392,7 +337,7 @@ class Board {
 	}
 
 	// accepts the return value from getAllPieceOptions, and returns all hits if a hit was found, or everything (if no hit was found)
-	filterMovesIfHits(pieces) {
+	filterMovesIfMustHit(pieces) {
 		// The getPieceOptions method returns only hits or only moves, so only one path has to be checked for every piece
 		let mustHit = false;
 		for (let i = 0; i < pieces.length; i++) {
