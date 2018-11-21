@@ -23,7 +23,7 @@
 </template>
 
 <script>
-import {Checkers, Board} from './utils/game.js';
+import {Checkers} from './utils/game.js';
 import {PIECES, SQUARE_TYPES, PLAYER_WHITE} from './utils/constants.js';
 
 import SquareComponent from './components/Square.vue';
@@ -60,8 +60,8 @@ export default {
 		// this.game.gameBoard.createBoard().setPiece(3, 4, 1).setPiece(4, 3, -1).setPiece(6, 1, -1).setPiece(4, 1, -1).setPiece(4, 5, -1).setPiece(1, 6, 1).setPiece(2, 1, -1).setPiece(2,3, -1);
 		// this.game.initializeTurn();
 
-		this.game.gameBoard.createBoard().setPiece(5, 4, -1).setPiece(2, 1, -1).setPiece(4, 1, -1).setPiece(6, 1, -1).setPiece(2, 3, 1).setPiece(1, 4, -1).setPiece(1, 6, -1).setPiece(3, 4, -1).setPiece(5, 6, -1);
-		this.game.initializeTurn();
+		// this.game.gameBoard.createBoard().setPiece(5, 4, -1).setPiece(2, 1, -1).setPiece(4, 1, -1).setPiece(6, 1, -1).setPiece(2, 3, 1).setPiece(1, 4, -1).setPiece(1, 6, -1).setPiece(3, 4, -1).setPiece(5, 6, -1);
+		// this.game.initializeTurn();
 	}
 };
 </script>

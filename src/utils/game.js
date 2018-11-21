@@ -1,5 +1,7 @@
 import { PLAYER_BLACK, PLAYER_WHITE, RULES, PIECE_KING, PIECE_MAN, NO_PIECE, PIECES, SQUARE_TYPES } from './constants.js';
 
+import { Grid } from './grid-ui.js';
+
 const DIRECTIONS = [
 	{ dx: 1, dy: -1 },
 	{ dx: 1, dy: 1 },
@@ -15,8 +17,8 @@ class Checkers {
 		this.captureBack = captureBack;
 		this.flyingKings = flyingKings;
 
-		this.checkerBoard = new Grid(this.size);
 		this.gameBoard = new Board(this.size).createBoard().addInitialPieces();
+		this.checkerBoard = new Grid(this.size).createPieces(this.gameBoard.board);
 
 		this.currentPlayer = this.firstMove;
 
@@ -107,8 +109,11 @@ class Checkers {
 
 		this.gameBoard.makeMove(x0, y0, x1, y1);
 
+		const isHit = this.isHit(x0, y0, x1, y1);
+		this.updateGrid(x0, y0, x1, y1, isHit);
+
 		// if hit, shorten paths, check if more hits possible
-		if (this.isHit(x0, y0, x1, y1)) {
+		if (isHit) {
 			console.log("Move is a hit, now modifying the currentPaths array to check if more hits are possible");
 			
 			this.shortenCurrentPaths(x0, y0, x1, y1);
@@ -121,6 +126,18 @@ class Checkers {
 
 		// if not hit, end turn
 		return this.finishTurn();
+	}
+
+	updateGrid(x0, y0, x1, y1, wasHit) {
+		this.checkerBoard.movePiece(x0, y0, x1, y1);
+		if (wasHit) {
+			let hitPiece = {
+				x: (x0 + x1) / 2,
+				y: (y0 + y1) / 2
+			};
+			this.checkerBoard.capturePiece(hitPiece);
+		}
+		return this;
 	}
 }
 
@@ -412,84 +429,4 @@ class Board {
 	}
 }
 
-class Grid {
-	constructor(size) {
-		this.size = size;
-		this.grid = this.createEmpty(this.size);
-
-		this.selected = null;
-	}
-
-	createEmpty(size) {
-		let arr = [];
-		
-		for (let i = 0; i < size; i++) {
-			let row = [];
-			for (let j = 0; j < size; j++) {
-				if ((i + j) % 2 === 0) row.push(new Square(j, i, SQUARE_TYPES.white));
-				else row.push(new Square(j, i, SQUARE_TYPES.black));
-			}
-			arr.push(row);
-		}
-		return arr;
-	}
-
-	selectSquare(x, y) {
-		if (this.selected !== null) {
-			if (this.selected.x === x && this.selected.y === y) {
-				this.deselectSquare();
-				return this;
-			} else {
-				this.deselectSquare();
-			}
-		}
-		this.selected = { x, y };
-		this.grid[y][x].selected = true;
-		return this;
-	}
-
-	deselectSquare() {
-		if (this.selected === null) return;
-
-		const { x, y } = this.selected;
-		this.selected = null;
-		this.grid[y][x].selected = false;
-		return this.updatePossibleMovesHits();
-	}
-
-	updatePossibleMovesHits(primMoves = [], nextMoves = [], hits = []) {
-		for (let i = 0; i < this.grid.length; i++) {
-			for (let j = 0; j < this.grid[i].length; j++) {
-				this.grid[j][i].isPossiblePrimaryMove = false;		
-				this.grid[j][i].isPossibleNextMove = false;		
-				this.grid[j][i].isPossibleHit = false;		
-			}
-		}
-
-		primMoves.forEach(square => {
-			this.grid[square.y][square.x].isPossiblePrimaryMove = true;
-		})
-		nextMoves.forEach(square => {
-			this.grid[square.y][square.x].isPossibleNextMove = true;
-		})
-		hits.forEach(square => {
-			this.grid[square.y][square.x].isPossibleHit = true;
-		})
-		return this;
-	}
-}
-
-class Square {
-	constructor(x, y, color) {
-		this.squareColor = color;
-		this.x = x;
-		this.y = y;
-
-		this.selected = false;
-		this.isPossiblePrimaryMove = false;
-		this.isPossibleNextMove = false;
-		this.isPossibleHit = false;
-	}
-}
-
-export { Checkers, Board, Grid, Square, Piece };
+export { Checkers, Board };
