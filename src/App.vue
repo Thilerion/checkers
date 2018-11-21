@@ -23,10 +23,17 @@
 				</SquareComponent>
 			</div>
 		</div>
-		<p>Current player: {{currentPlayer}}</p>
-		<h2>Pieces Left</h2>
-		<p>White: {{whitePiecesLeft}}</p>
-		<p>Black: {{blackPiecesLeft}}</p>
+		<div class="gameState">
+			<div v-if="!winner" class="playing">
+				<p>Current player: {{currentPlayer}}</p>
+				<h2>Pieces Left</h2>
+				<p>White: {{whitePiecesLeft}}</p>
+				<p>Black: {{blackPiecesLeft}}</p>
+			</div>
+			<div v-else class="game-end">
+				<p>{{winner}} player has won!</p>
+			</div>
+		</div>
 	</div>
 </template>
 
@@ -87,6 +94,11 @@ export default {
 		},
 		currentPlayer() {
 			return this.game.currentPlayer === PLAYER_BLACK ? "Black" : "White";
+		},
+		winner() {
+			if (!this.game.gameEnd) return;
+
+			return `${this.game.winner.charAt(0).toUpperCase()}${this.game.winner.slice(1)}`;
 		}
 	},
 	methods: {
@@ -123,6 +135,4 @@ export default {
 	opacity: 0.7;
 	font-size: 12px;
 }
-
-
 </style>

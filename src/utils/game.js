@@ -22,10 +22,11 @@ class Checkers {
 
 		this.currentPlayer = this.firstMove;
 		this.selected = null;
-
 		this.currentPaths = [];
-
 		this.piecesLeft = {};
+
+		this.gameEnd = false;
+		this.winner = null;
 
 		this.initializeTurn();
 	}
@@ -40,10 +41,28 @@ class Checkers {
 		return this;
 	}
 
+	checkGameEnd() {
+		if (this.gameBoard.piecesLeft[PLAYER_BLACK] === 0) {
+			// white has won
+			this.gameEnd = true;
+			this.winner = PLAYER_WHITE;
+		} else if (this.gameBoard.piecesLeft[PLAYER_WHITE] === 0) {
+			// black has won
+			this.gameEnd = true;
+			this.winner = PLAYER_BLACK;
+		} else {
+			return this;
+		}
+	}
+
 	finishTurn() {
 		this.currentPaths = [];
 		this.selected = null;
-		return this.nextPlayer().initializeTurn();
+		this.checkGameEnd();
+
+		if (!this.gameEnd) {
+			return this.nextPlayer().initializeTurn();
+		}
 	}
 
 	nextPlayer() {
