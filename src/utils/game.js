@@ -232,7 +232,7 @@ class Board {
 				}
 			}
 		}
-		return this;
+		return this.updatePiecesAmount();
 	}
 
 	updatePiecesAmount() {
