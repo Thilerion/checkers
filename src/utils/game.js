@@ -247,8 +247,8 @@ class Board {
 	}
 
 	isKing(x, y) {
-		if (Math.abs(this.getPieceAt(x, y)) > 1) return true;
-		return false;
+		let piece = this.getPieceAt(x, y);
+		return (piece === PIECES.kingBlack || piece === PIECES.kingWhite);
 	}
 
 	checkCrown(x, y) {
