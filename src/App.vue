@@ -114,8 +114,11 @@ export default {
 		// this.game.regenerateGrid().initializeTurn();
 
 		// TEST KING
-		this.game.gameBoard.createBoard().setPiece(2, 7, -2).setPiece(5, 0, 2).setPiece(2, 1, 1).setPiece(0, 5, -1).setPiece(2, 3, -1).setPiece(4, 5, 1);
-		this.game.regenerateGrid().initializeTurn();
+		// this.game.gameBoard.createBoard().setPiece(2, 7, -2).setPiece(5, 0, 2).setPiece(2, 1, 1).setPiece(0, 5, -1).setPiece(2, 3, -1).setPiece(4, 5, 1);
+		// this.game.regenerateGrid().initializeTurn();
+
+		// this.game.gameBoard.createBoard().setPiece(3, 4, 1).setPiece(5, 4, 1).setPiece(4, 3, -1);
+		// this.game.regenerateGrid().initializeTurn();
 	}
 };
 </script>

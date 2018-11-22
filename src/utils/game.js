@@ -83,6 +83,13 @@ class Checkers {
 		return paths.map(path => path[0]);
 	}
 
+	getMovePath(x0, y0, x1, y1) {
+		let paths = this.getPathsForPiece(x0, y0);
+		if (!paths) return;
+
+		return paths.filter(path => path[0].x === x1 && path[0].y === y1)[0][0];
+	}
+
 	isValidMove(x0, y0, x1, y1) {
 		let nextMoves = this.getNextMovesForPiece(x0, y0);
 		if (!nextMoves) return false;
@@ -92,10 +99,6 @@ class Checkers {
 
 	isPieceSelectable(x, y) {
 		return !!this.getPathsForPiece(x, y);
-	}
-
-	isHit(x0, y0, x1, y1) {
-		return Math.abs(x0 - x1) > 1 && Math.abs(y0 - y1) > 1;
 	}
 
 	shortenCurrentPaths(x0, y0, x1, y1) {
@@ -128,10 +131,13 @@ class Checkers {
 			return this;
 		}
 
-		this.gameBoard.makeMove(x0, y0, x1, y1);
+		const foundMove = this.getMovePath(x0, y0, x1, y1);
+		const capture = foundMove.captured;
+
+		this.gameBoard.makeMove(x0, y0, x1, y1, capture);
 		this.updateSelection(x1, y1);
 
-		const isHit = this.isHit(x0, y0, x1, y1);
+		const isHit = foundMove.captured != null;
 		this.updateGrid(x0, y0, x1, y1, isHit);
 
 		// if hit, shorten paths, check if more hits possible
@@ -412,6 +418,8 @@ class Board {
 			let x2 = dir.dx + foundEnemyPiece.x;
 			let y2 = dir.dy + foundEnemyPiece.y;
 
+			let isValidSquareDebug = this.isValidSquare(x2, y2);
+			let hasPieceDebug = this.getPieceAt(x2, y2);
 			if (this.isValidSquare(x2, y2) && !this.getPieceAt(x2, y2)) {
 				hits.push({ x: x2, y: y2, captured: { x: foundEnemyPiece.x, y: foundEnemyPiece.y } });
 			}
@@ -454,7 +462,7 @@ class Board {
 		// Hits were found, so now to loop over all hits, and check for any subsequent hits
 		let pathsForPiece = [];
 		hits.forEach(hit => {
-			board.makeMove(x, y, hit.x, hit.y);
+			board.makeMove(x, y, hit.x, hit.y, hit.captured);
 			
 			let nextHits = JSON.parse(JSON.stringify(board.getSubsequentHits(hit.x, hit.y)));
 			pathsForPiece.push(...nextHits);
@@ -490,13 +498,14 @@ class Board {
 
 	reduceHistory(history) {
 		return history.reduce((moves, move) => {
-			if (move.capture) {
+			if (move.captured) {
 				moves.push({
 					x: move.x1,
 					y: move.y1,
 					captured: {
-						x: move.capture.x,
-						y: move.capture.y
+						x: move.captured.x,
+						y: move.captured.y,
+						type: move.captured.type
 					}
 				});
 			}
@@ -565,17 +574,14 @@ class Board {
 		}, [])
 	}
 
-	makeMove(x0, y0, x1, y1) {
-		console.log({ x0, y0, x1, y1 });
-		let dx = x1 - x0;
-		let dy = y1 - y0;
+	makeMove(x0, y0, x1, y1, captured = null) {
+		let move = { x0, x1, y0, y1 };
 
-		let move = { x0, x1, y0, y1, capture: null };
-
-		if (Math.abs(dx) > 1 && Math.abs(dy) > 1) {
-			move.capture = { x: x0 + (dx / 2), y: y0 + (dy / 2), type: null};
-			move.capture.type = this.getPieceAt(move.capture.x, move.capture.y);
-			this.removePiece(move.capture.x, move.capture.y);
+		if (captured != null) {
+			move.captured = captured;
+			let captureType = this.getPieceAt(captured.x, captured.y);
+			move.captured.type = captureType;
+			this.removePiece(captured.x, captured.y);
 		}
 
 		let movedPiece = this.removePiece(x0, y0);
@@ -589,10 +595,10 @@ class Board {
 		let move = this.history.pop();
 
 		let movedPiece = this.removePiece(move.x1, move.y1);
-		this.setPiece(move.x0, move.x1, movedPiece);
+		this.setPiece(move.x0, move.y0, movedPiece);
 
-		if (!!move.capture) {
-			this.setPiece(move.capture.x, move.capture.y, move.capture.type);
+		if (!!move.captured) {
+			this.setPiece(move.captured.x, move.captured.y, move.captured.type);
 		}
 
 		return this;
