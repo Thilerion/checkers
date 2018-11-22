@@ -207,14 +207,23 @@ class Board {
 		this.size = size;
 		this.board = [];
 
-		this.piecesLeft = {};
+		this.piecesLeft = {
+			[PLAYER_BLACK]: 0,
+			[PLAYER_WHITE]: 0
+		};
 
 		this.history = [];
 	}
 
-	static copy(oldBoard) {
+	static copy(oldBoard, keepHistory = false) {
 		let newBoard = new Board(oldBoard.size);
 		newBoard.board = JSON.parse(JSON.stringify(oldBoard.board));
+		newBoard.piecesLeft = { ...oldBoard.piecesLeft };
+
+		if (keepHistory) {
+			newBoard.history = JSON.parse(JSON.stringify(oldBoard.history));
+		}
+
 		return newBoard;
 	}
 
@@ -252,29 +261,6 @@ class Board {
 		return this;
 	}
 
-	isKing(x, y) {
-		let piece = this.getPieceAt(x, y);
-		return (piece === PIECES.kingBlack || piece === PIECES.kingWhite);
-	}
-
-	checkCrown(x, y) {
-		let piece = this.getPieceAt(x, y);
-		let player = this.getPiecePlayer(piece);
-		
-		if (this.isKing(x, y)) return false;
-
-		if ((player === PLAYER_WHITE && y === 0) ||
-			(player === PLAYER_BLACK && y === this.size - 1)) {
-			this.crownPiece(x, y, piece);
-			return true;
-		}
-		return false;
-	}
-
-	crownPiece(x, y, piece) {
-		this.board[y].splice(x, 1, (piece * 2));
-	}
-
 	removePiece(x, y) {
 		let piece = this.getPieceAt(x, y);
 		this.board[y].splice(x, 1, NO_PIECE);
@@ -301,6 +287,29 @@ class Board {
 
 	isValidSquare(x, y) {
 		return (x >= 0 && x < this.size) && (y >= 0 && y < this.size) && ((x + y) % 2 === 1);
+	}
+
+	isKing(x, y) {
+		let piece = this.getPieceAt(x, y);
+		return (piece === PIECES.kingBlack || piece === PIECES.kingWhite);
+	}
+
+	checkCrown(x, y) {
+		let piece = this.getPieceAt(x, y);
+		let player = this.getPiecePlayer(piece);
+		
+		if (this.isKing(x, y)) return false;
+
+		if ((player === PLAYER_WHITE && y === 0) ||
+			(player === PLAYER_BLACK && y === this.size - 1)) {
+			this.crownPiece(x, y, piece);
+			return true;
+		}
+		return false;
+	}
+
+	crownPiece(x, y, piece) {
+		this.board[y].splice(x, 1, (piece * 2));
 	}
 
 	// Check all directions around square, and returns those that are valid
