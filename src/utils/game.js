@@ -83,6 +83,13 @@ class Checkers {
 		return paths.map(path => path[0]);
 	}
 
+	getMovePath(x0, y0, x1, y1) {
+		let paths = this.getPathsForPiece(x0, y0);
+		if (!paths) return;
+
+		return paths.filter(path => path[0].x === x1 && path[0].y === y1)[0][0];
+	}
+
 	isValidMove(x0, y0, x1, y1) {
 		let nextMoves = this.getNextMovesForPiece(x0, y0);
 		if (!nextMoves) return false;
@@ -92,10 +99,6 @@ class Checkers {
 
 	isPieceSelectable(x, y) {
 		return !!this.getPathsForPiece(x, y);
-	}
-
-	isHit(x0, y0, x1, y1) {
-		return Math.abs(x0 - x1) > 1 && Math.abs(y0 - y1) > 1;
 	}
 
 	shortenCurrentPaths(x0, y0, x1, y1) {
@@ -128,10 +131,13 @@ class Checkers {
 			return this;
 		}
 
-		this.gameBoard.makeMove(x0, y0, x1, y1);
+		const foundMove = this.getMovePath(x0, y0, x1, y1);
+		const capture = foundMove.captured;
+
+		this.gameBoard.makeMove(x0, y0, x1, y1, capture);
 		this.updateSelection(x1, y1);
 
-		const isHit = this.isHit(x0, y0, x1, y1);
+		const isHit = foundMove.captured != null;
 		this.updateGrid(x0, y0, x1, y1, isHit);
 
 		// if hit, shorten paths, check if more hits possible
@@ -247,8 +253,8 @@ class Board {
 	}
 
 	isKing(x, y) {
-		if (Math.abs(this.getPieceAt(x, y)) > 1) return true;
-		return false;
+		let piece = this.getPieceAt(x, y);
+		return (piece === PIECES.kingBlack || piece === PIECES.kingWhite);
 	}
 
 	checkCrown(x, y) {
@@ -282,6 +288,9 @@ class Board {
 	}
 
 	getPieceAt(x, y) {
+		if (x === undefined || !Number.isInteger(y)) {
+			console.trace();
+		}
 		return this.board[y][x];
 	}
 
@@ -297,25 +306,52 @@ class Board {
 	// Check all directions around square, and returns those that are valid
 	// Also adds if it is forward or not (normally pieces can't move backwards)
 	// Returns: Array of Objects {dx: +-1, dy: +-1, forward: Boolean}
-	getValidDirections(x, y) {
-		return DIRECTIONS.filter(dir => {
-			let x1 = dir.dx + x;
-			let y1 = dir.dy + y;
-			return this.isValidSquare(x1, y1);
-		}).map(dir => {
-			let type = this.getPieceAt(x, y);
-			let forward = true;
-			if (type === PIECES.manWhite && dir.dy > 0) forward = false;
-			else if (type === PIECES.manBlack && dir.dy < 0) forward = false;
+	getValidDirections(x, y) {		
+		let type = this.getPieceAt(x, y);
+		if (type === NO_PIECE) return [];
+		let player = this.getPiecePlayer(type);
+		let isKing = this.isKing(x, y);
 
-			return { ...dir, forward };
-		})
+		const incrementPos = (x, y, dx, dy) => {
+			return { x: x + dx, y: y + dy };
+		}
+
+		return DIRECTIONS.reduce((valids, dir) => {
+			let forward =
+				(player === PLAYER_BLACK && dir.dy > 0) ||
+				(player === PLAYER_WHITE && dir.dy < 0) ||
+				(isKing) ? true : false;
+			
+			let nextDir = { ...dir };
+			let nextPos = incrementPos(x, y, nextDir.dx, nextDir.dy);
+
+			// if position is valid, create a Dir object for it
+			if (this.isValidSquare(nextPos.x, nextPos.y)) {
+				let totalDir = { ...nextDir, forward };
+				
+				if (isKing) {
+					totalDir.kingDiagonalDirs = [];
+					nextDir = { dx: nextDir.dx + dir.dx, dy: nextDir.dy + dir.dy };
+					nextPos = incrementPos(x, y, nextDir.dx, nextDir.dy);
+				}
+
+				while (isKing && this.isValidSquare(nextPos.x, nextPos.y)) {
+					totalDir.kingDiagonalDirs.push({ ...nextDir });
+					nextDir = { dx: nextDir.dx + dir.dx, dy: nextDir.dy + dir.dy };
+					nextPos = incrementPos(x, y, nextDir.dx, nextDir.dy);
+				}
+
+				valids.push(totalDir);
+			}
+			return valids;
+		}, []);
 	}
 
 	// Loop over validDirections, returning only those where the square is empty
 	// Also checks if it is forward or not
 	// Returns: Array of Objects with locations to which can be moved {x, y}
 	getPieceMoves(x, y) {
+		let isKing = this.isKing(x, y);
 		return this.getValidDirections(x, y).reduce((moves, dir) => {
 			let x1 = dir.dx + x;
 			let y1 = dir.dy + y;
@@ -324,6 +360,19 @@ class Board {
 			if (!nextSquare && dir.forward) {
 				// No piece on that square, and it is the right directions, so add to array
 				moves.push({ x: x1, y: y1 });
+
+				if (isKing && dir.kingDiagonalDirs.length > 0) {
+					for (let i = 0; i < dir.kingDiagonalDirs.length; i++) {
+						let newDir = dir.kingDiagonalDirs[i];
+						x1 = newDir.dx + x;
+						y1 = newDir.dy + y;
+						nextSquare = this.getPieceAt(x1, y1);
+						
+						if (nextSquare) break;
+
+						moves.push({ x: x1, y: y1 });
+					}
+				}
 			}
 			return moves;
 		}, []);
@@ -335,23 +384,61 @@ class Board {
 	//		along with captured piece location { x, y, captured: {x, y} }
 	getPieceHits(x, y) {
 		let curPlayer = this.getPiecePlayer(this.getPieceAt(x, y));
-
+		let isKing = this.isKing(x, y);
 		return this.getValidDirections(x, y).reduce((hits, dir) => {
+			// check next square, or all next squares if king, for enemy piece
+			// if yes, check next square, or all next squares if king, for empty piece
+			// add next position, or all next positions if king, to hits array, along with coords of captured piece
 			let x1 = dir.dx + x;
 			let y1 = dir.dy + y;
 			let nextSquare = this.getPieceAt(x1, y1);
 
-			// Check if nextSquare has enemy piece
-			if (nextSquare && curPlayer !== this.getPiecePlayer(nextSquare)) {
-				// Check if next square is empty
-				let x2 = dir.dx + x1;
-				let y2 = dir.dy + y1;
+			let foundEnemyPiece;
+			let foundEnemyPieceDirIndex;
 
-				if (this.isValidSquare(x2, y2) && !this.getPieceAt(x2, y2)) {
-					// TODO: is the captured property necessary?
-					hits.push({ x: x2, y: y2, captured: { x: x1, y: y1 } });
+			if (nextSquare && curPlayer !== this.getPiecePlayer(nextSquare)) {
+				// check next square
+				foundEnemyPiece = {x: x1, y: y1};
+			} else if (!nextSquare && isKing) {
+				// if not found, and is king, check next squares in diagonal
+				for (let i = 0; i < dir.kingDiagonalDirs.length && foundEnemyPiece == null; i++) {
+					x1 = dir.kingDiagonalDirs[i].dx + x;
+					y1 = dir.kingDiagonalDirs[i].dy + y;
+					nextSquare = this.getPieceAt(x1, y1);
+					if (nextSquare && curPlayer !== this.getPiecePlayer(nextSquare)) {
+						foundEnemyPiece = { x: x1, y: y1 };
+						foundEnemyPieceDirIndex = i;
+					}
 				}
 			}
+
+			// if no enemy piece found, in the nextSquare for man, in the diagonal for king, return hits
+			if (!foundEnemyPiece) return hits;
+
+			let x2 = dir.dx + foundEnemyPiece.x;
+			let y2 = dir.dy + foundEnemyPiece.y;
+
+			let isValidSquareDebug = this.isValidSquare(x2, y2);
+			let hasPieceDebug = this.getPieceAt(x2, y2);
+			if (this.isValidSquare(x2, y2) && !this.getPieceAt(x2, y2)) {
+				hits.push({ x: x2, y: y2, captured: { x: foundEnemyPiece.x, y: foundEnemyPiece.y } });
+			}
+
+			if (isKing) {
+				// if king, check where in the kingDiagonalDirs we left off, and resume from there
+				// to check for more empty cells that can be added as hit option
+				let startIndex = foundEnemyPieceDirIndex != null ? foundEnemyPieceDirIndex + 2 : 1;
+				for (let j = startIndex; j < dir.kingDiagonalDirs.length; j++) {
+					x2 = dir.kingDiagonalDirs[j].dx + x;
+					y2 = dir.kingDiagonalDirs[j].dy + y;
+					if (this.isValidSquare(x2, y2) && !this.getPieceAt(x2, y2)) {
+						hits.push({ x: x2, y: y2, captured: { x: foundEnemyPiece.x, y: foundEnemyPiece.y } });
+					} else {
+						break;
+					}
+				}
+			}
+			console.log(hits);
 			return hits;
 		}, [])
 	}
@@ -375,7 +462,7 @@ class Board {
 		// Hits were found, so now to loop over all hits, and check for any subsequent hits
 		let pathsForPiece = [];
 		hits.forEach(hit => {
-			board.makeMove(x, y, hit.x, hit.y);
+			board.makeMove(x, y, hit.x, hit.y, hit.captured);
 			
 			let nextHits = JSON.parse(JSON.stringify(board.getSubsequentHits(hit.x, hit.y)));
 			pathsForPiece.push(...nextHits);
@@ -411,13 +498,14 @@ class Board {
 
 	reduceHistory(history) {
 		return history.reduce((moves, move) => {
-			if (move.capture) {
+			if (move.captured) {
 				moves.push({
 					x: move.x1,
 					y: move.y1,
 					captured: {
-						x: move.capture.x,
-						y: move.capture.y
+						x: move.captured.x,
+						y: move.captured.y,
+						type: move.captured.type
 					}
 				});
 			}
@@ -486,16 +574,14 @@ class Board {
 		}, [])
 	}
 
-	makeMove(x0, y0, x1, y1) {
-		let dx = x1 - x0;
-		let dy = y1 - y0;
+	makeMove(x0, y0, x1, y1, captured = null) {
+		let move = { x0, x1, y0, y1 };
 
-		let move = { x0, x1, y0, y1, capture: null };
-
-		if (Math.abs(dx) > 1 && Math.abs(dy) > 1) {
-			move.capture = { x: x0 + (dx / 2), y: y0 + (dy / 2), type: null};
-			move.capture.type = this.getPieceAt(move.capture.x, move.capture.y);
-			this.removePiece(move.capture.x, move.capture.y);
+		if (captured != null) {
+			move.captured = captured;
+			let captureType = this.getPieceAt(captured.x, captured.y);
+			move.captured.type = captureType;
+			this.removePiece(captured.x, captured.y);
 		}
 
 		let movedPiece = this.removePiece(x0, y0);
@@ -509,10 +595,10 @@ class Board {
 		let move = this.history.pop();
 
 		let movedPiece = this.removePiece(move.x1, move.y1);
-		this.setPiece(move.x0, move.x1, movedPiece);
+		this.setPiece(move.x0, move.y0, movedPiece);
 
-		if (!!move.capture) {
-			this.setPiece(move.capture.x, move.capture.y, move.capture.type);
+		if (!!move.captured) {
+			this.setPiece(move.captured.x, move.captured.y, move.captured.type);
 		}
 
 		return this;
