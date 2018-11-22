@@ -308,25 +308,31 @@ class Board {
 		}
 
 		return DIRECTIONS.reduce((valids, dir) => {
-			let nextPos = incrementPos(x, y, dir.dx, dir.dy);
 			let forward =
-				(player === PLAYER_BLACK && dir.dy < 0) ||
-					(player === PLAYER_WHITE && dir.dy > 0) ?
-					false : true;
+				(player === PLAYER_BLACK && dir.dy > 0) ||
+				(player === PLAYER_WHITE && dir.dy < 0) ||
+				(isKing) ? true : false;
 			
-			let newDir = { ...dir };
-			
-			if (this.isValidSquare(nextPos.x, nextPos.y)) {
-				valids.push({ ...newDir, forward });
-				nextPos = incrementPos(nextPos.x, nextPos.y, dir.dx, dir.dy);
-				newDir = { dx: newDir.dx + dir.dx, dy: newDir.dy + dir.dy };
-			}
+			let nextDir = { ...dir };
+			let nextPos = incrementPos(x, y, nextDir.dx, nextDir.dy);
 
-			while (isKing && this.isValidSquare(nextPos.x, nextPos.y)) {
-				let validDir = { ...newDir, forward };
-				valids.push(validDir);
-				nextPos = incrementPos(nextPos.x, nextPos.y, dir.dx, dir.dy);
-				newDir = { dx: newDir.dx + dir.dx, dy: newDir.dy + dir.dy };
+			// if position is valid, create a Dir object for it
+			if (this.isValidSquare(nextPos.x, nextPos.y)) {
+				let totalDir = { ...nextDir, forward };
+				
+				if (isKing) {
+					totalDir.kingDiagonalDirs = [];
+					nextDir = { dx: nextDir.dx + dir.dx, dy: nextDir.dy + dir.dy };
+					nextPos = incrementPos(x, y, nextDir.dx, nextDir.dy);
+				}
+
+				while (isKing && this.isValidSquare(nextPos.x, nextPos.y)) {
+					totalDir.kingDiagonalDirs.push({ ...nextDir });
+					nextDir = { dx: nextDir.dx + dir.dx, dy: nextDir.dy + dir.dy };
+					nextPos = incrementPos(x, y, nextDir.dx, nextDir.dy);
+				}
+
+				valids.push(totalDir);
 			}
 			return valids;
 		}, []);
@@ -336,11 +342,6 @@ class Board {
 	// Also checks if it is forward or not
 	// Returns: Array of Objects with locations to which can be moved {x, y}
 	getPieceMoves(x, y) {
-		let isKing = this.isKing(x, y);
-		const incrementPos = (x, y, dx, dy) => {
-			return { x: x + dx, y: y + dy };
-		} 
-
 		return this.getValidDirections(x, y).reduce((moves, dir) => {
 			let x1 = dir.dx + x;
 			let y1 = dir.dy + y;
@@ -349,15 +350,6 @@ class Board {
 			if (!nextSquare && dir.forward) {
 				// No piece on that square, and it is the right directions, so add to array
 				moves.push({ x: x1, y: y1 });
-
-				/*if (isKing) {
-					// if king, push this direction and any subsequent until an invalid direction is found
-					let nextPos = incrementPos(x1, y1, dir.dx, dir.dy);
-					while (this.isValidSquare(nextPos.x, nextPos.y) && !this.getPieceAt(nextPos.x, nextPos.y)) {
-						moves.push({ x: nextPos.x, y: nextPos.y });
-						nextPos = incrementPos(nextPos.x, nextPos.y, dir.dx, dir.dy);
-					}
-				}*/
 			}
 			return moves;
 		}, []);
@@ -368,12 +360,7 @@ class Board {
 	// Returns: Array of Objects with locations to which can be moved by hitting
 	//		along with captured piece location { x, y, captured: {x, y} }
 	getPieceHits(x, y) {
-		let isKing = this.isKing(x, y);
 		let curPlayer = this.getPiecePlayer(this.getPieceAt(x, y));
-		const incrementPos = (x, y, dx, dy) => {
-			return { x: x + dx, y: y + dy };
-		} 
-
 		return this.getValidDirections(x, y).reduce((hits, dir) => {
 			let x1 = dir.dx + x;
 			let y1 = dir.dy + y;
@@ -387,10 +374,7 @@ class Board {
 
 				if (this.isValidSquare(x2, y2) && !this.getPieceAt(x2, y2)) {
 					hits.push({ x: x2, y: y2, captured: { x: x1, y: y1 } });
-					// TODO: if king, check all next diagonal squares, because it can land there as well
 				}
-			} else if (isKing && !nextSquare) {
-				// TODO: if king, check if the next square has an enemy piece, until an enemy piece is found or it is not a valid square
 			}
 			return hits;
 		}, [])
