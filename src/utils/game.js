@@ -342,6 +342,7 @@ class Board {
 	// Also checks if it is forward or not
 	// Returns: Array of Objects with locations to which can be moved {x, y}
 	getPieceMoves(x, y) {
+		let isKing = this.isKing(x, y);
 		return this.getValidDirections(x, y).reduce((moves, dir) => {
 			let x1 = dir.dx + x;
 			let y1 = dir.dy + y;
@@ -350,6 +351,19 @@ class Board {
 			if (!nextSquare && dir.forward) {
 				// No piece on that square, and it is the right directions, so add to array
 				moves.push({ x: x1, y: y1 });
+
+				if (isKing && dir.kingDiagonalDirs.length > 0) {
+					for (let i = 0; i < dir.kingDiagonalDirs.length; i++) {
+						let newDir = dir.kingDiagonalDirs[i];
+						x1 = newDir.dx + x;
+						y1 = newDir.dy + y;
+						nextSquare = this.getPieceAt(x1, y1);
+						
+						if (nextSquare) break;
+
+						moves.push({ x: x1, y: y1 });
+					}
+				}
 			}
 			return moves;
 		}, []);
