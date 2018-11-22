@@ -298,12 +298,13 @@ class Board {
 	// Also adds if it is forward or not (normally pieces can't move backwards)
 	// Returns: Array of Objects {dx: +-1, dy: +-1, forward: Boolean}
 	getValidDirections(x, y) {
+		let type = this.getPieceAt(x, y);
+		if (type === NO_PIECE) return [];
 		return DIRECTIONS.filter(dir => {
 			let x1 = dir.dx + x;
 			let y1 = dir.dy + y;
 			return this.isValidSquare(x1, y1);
 		}).map(dir => {
-			let type = this.getPieceAt(x, y);
 			let forward = true;
 			if (type === PIECES.manWhite && dir.dy > 0) forward = false;
 			else if (type === PIECES.manBlack && dir.dy < 0) forward = false;
@@ -316,6 +317,11 @@ class Board {
 	// Also checks if it is forward or not
 	// Returns: Array of Objects with locations to which can be moved {x, y}
 	getPieceMoves(x, y) {
+		// let isKing = this.isKing(x, y);
+		// const incrementPos = (x, y, dx, dy) => {
+			// return { x: x + dx, y: y + dy };
+		// } 
+
 		return this.getValidDirections(x, y).reduce((moves, dir) => {
 			let x1 = dir.dx + x;
 			let y1 = dir.dy + y;
@@ -324,6 +330,15 @@ class Board {
 			if (!nextSquare && dir.forward) {
 				// No piece on that square, and it is the right directions, so add to array
 				moves.push({ x: x1, y: y1 });
+
+				/*if (isKing) {
+					// if king, push this direction and any subsequent until an invalid direction is found
+					let nextPos = incrementPos(x1, y1, dir.dx, dir.dy);
+					while (!this.getPieceAt(nextPos.x, nextPos.y)) {
+						moves.push({ x: nextPos.x, y: nextPos.y });
+						nextPos = incrementPos(nextPos.x, nextPos.y, dir.dx, dir.dy);
+					}
+				}*/
 			}
 			return moves;
 		}, []);
