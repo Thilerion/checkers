@@ -282,6 +282,9 @@ class Board {
 	}
 
 	getPieceAt(x, y) {
+		if (x === undefined || !Number.isInteger(y)) {
+			console.trace();
+		}
 		return this.board[y][x];
 	}
 
@@ -375,21 +378,59 @@ class Board {
 	//		along with captured piece location { x, y, captured: {x, y} }
 	getPieceHits(x, y) {
 		let curPlayer = this.getPiecePlayer(this.getPieceAt(x, y));
+		let isKing = this.isKing(x, y);
 		return this.getValidDirections(x, y).reduce((hits, dir) => {
+			// check next square, or all next squares if king, for enemy piece
+			// if yes, check next square, or all next squares if king, for empty piece
+			// add next position, or all next positions if king, to hits array, along with coords of captured piece
 			let x1 = dir.dx + x;
 			let y1 = dir.dy + y;
 			let nextSquare = this.getPieceAt(x1, y1);
 
-			// Check if nextSquare has enemy piece
-			if (nextSquare && curPlayer !== this.getPiecePlayer(nextSquare)) {
-				// Check if next square is empty
-				let x2 = dir.dx + x1;
-				let y2 = dir.dy + y1;
+			let foundEnemyPiece;
+			let foundEnemyPieceDirIndex;
 
-				if (this.isValidSquare(x2, y2) && !this.getPieceAt(x2, y2)) {
-					hits.push({ x: x2, y: y2, captured: { x: x1, y: y1 } });
+			if (nextSquare && curPlayer !== this.getPiecePlayer(nextSquare)) {
+				// check next square
+				foundEnemyPiece = {x: x1, y: y1};
+			} else if (!nextSquare && isKing) {
+				// if not found, and is king, check next squares in diagonal
+				for (let i = 0; i < dir.kingDiagonalDirs.length && foundEnemyPiece == null; i++) {
+					x1 = dir.kingDiagonalDirs[i].dx + x;
+					y1 = dir.kingDiagonalDirs[i].dy + y;
+					nextSquare = this.getPieceAt(x1, y1);
+					if (nextSquare && curPlayer !== this.getPiecePlayer(nextSquare)) {
+						foundEnemyPiece = { x: x1, y: y1 };
+						foundEnemyPieceDirIndex = i;
+					}
 				}
 			}
+
+			// if no enemy piece found, in the nextSquare for man, in the diagonal for king, return hits
+			if (!foundEnemyPiece) return hits;
+
+			let x2 = dir.dx + foundEnemyPiece.x;
+			let y2 = dir.dy + foundEnemyPiece.y;
+
+			if (this.isValidSquare(x2, y2) && !this.getPieceAt(x2, y2)) {
+				hits.push({ x: x2, y: y2, captured: { x: foundEnemyPiece.x, y: foundEnemyPiece.y } });
+			}
+
+			if (isKing) {
+				// if king, check where in the kingDiagonalDirs we left off, and resume from there
+				// to check for more empty cells that can be added as hit option
+				let startIndex = foundEnemyPieceDirIndex != null ? foundEnemyPieceDirIndex + 2 : 1;
+				for (let j = startIndex; j < dir.kingDiagonalDirs.length; j++) {
+					x2 = dir.kingDiagonalDirs[j].dx + x;
+					y2 = dir.kingDiagonalDirs[j].dy + y;
+					if (this.isValidSquare(x2, y2) && !this.getPieceAt(x2, y2)) {
+						hits.push({ x: x2, y: y2, captured: { x: foundEnemyPiece.x, y: foundEnemyPiece.y } });
+					} else {
+						break;
+					}
+				}
+			}
+			console.log(hits);
 			return hits;
 		}, [])
 	}
@@ -525,6 +566,7 @@ class Board {
 	}
 
 	makeMove(x0, y0, x1, y1) {
+		console.log({ x0, y0, x1, y1 });
 		let dx = x1 - x0;
 		let dy = y1 - y0;
 
