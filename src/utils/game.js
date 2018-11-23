@@ -28,6 +28,15 @@ class Checkers {
 		this.gameEnd = false;
 		this.winner = null;
 
+		this.moveNumber = 0;
+
+		this.drawCounters = {
+			oneKing: null,
+			oneKingTwoKings: null,
+			oneKingThreePieces: null,
+			noCapturesOnlyKingsMoved: null
+		}
+
 		this.initializeTurn();
 	}
 
@@ -38,10 +47,19 @@ class Checkers {
 		let filteredLengths = this.gameBoard.filterSmallPaths(filteredMoves);
 
 		this.currentPaths = filteredLengths;
+		return this.checkLoss();
+	}
+
+	checkLoss() {
+		// lose if no moves available
+		if (this.currentPaths.length <= 0) {
+			this.gameEnd = true;
+			this.winner = this.currentPlayer === PLAYER_BLACK ? PLAYER_WHITE : PLAYER_BLACK;
+		}
 		return this;
 	}
 
-	checkGameEnd() {
+	checkWin() {
 		if (this.gameBoard.piecesLeft[PLAYER_BLACK] === 0) {
 			// white has won
 			this.gameEnd = true;
@@ -50,15 +68,30 @@ class Checkers {
 			// black has won
 			this.gameEnd = true;
 			this.winner = PLAYER_BLACK;
-		} else {
-			return this;
 		}
+		return this;
+	}
+
+	checkDraw() {
+		return this;
+	}
+
+	checkGameEnd() {
+		// Official rulebook: https://docs.google.com/file/d/1GTDH8rHlracUIqkry5aRVwybIiLfLaHy/view?rm=minimal
+		// win if opponent no pieces left
+		this.checkWin();
+		if (this.gameEnd) return this;
+		// draw / remise if:
+			// both one king
+			// one king vs two kings (after 5 moves each)
+			// three pieces among which one king, against one king (after 16 moves each)
+			// after 25 moves each without captures, and only having moved with kings
+		return this.checkDraw();
 	}
 
 	finishTurn() {
 		this.currentPaths = [];
 		this.selected = null;
-		this.checkGameEnd();
 
 		if (!this.gameEnd) {
 			return this.nextPlayer().initializeTurn();
@@ -67,6 +100,13 @@ class Checkers {
 
 	nextPlayer() {
 		this.currentPlayer = this.currentPlayer === PLAYER_BLACK ? PLAYER_WHITE : PLAYER_BLACK;
+		return this.incrementMoveNumber();
+	}
+
+	incrementMoveNumber() {
+		if (this.currentPlayer === this.firstMove) {
+			this.moveNumber++;
+		}
 		return this;
 	}
 
@@ -237,13 +277,26 @@ class Board {
 			[PLAYER_WHITE]: 0
 		};
 
+		this.kingsLeft = {
+			[PLAYER_BLACK]: 0,
+			[PLAYER_WHITE]: 0
+		}
+
+		this.menLeft = {
+			[PLAYER_BLACK]: 0,
+			[PLAYER_WHITE]: 0
+		}
+
 		this.history = [];
 	}
 
 	static copy(oldBoard, keepHistory = false) {
 		let newBoard = new Board(oldBoard.size);
 		newBoard.board = JSON.parse(JSON.stringify(oldBoard.board));
+
 		newBoard.piecesLeft = { ...oldBoard.piecesLeft };
+		newBoard.kingsLeft = { ...oldBoard.kingsLeft };
+		newBoard.menLeft = { ...oldBoard.menLeft };
 
 		if (keepHistory) {
 			newBoard.history = JSON.parse(JSON.stringify(oldBoard.history));
@@ -276,13 +329,40 @@ class Board {
 	}
 
 	updatePiecesAmount() {
-		this.piecesLeft = this.board.reduce((acc, row) => {
+		let manBlack = 0;
+		let manWhite = 0;
+		let kingBlack = 0;
+		let kingWhite = 0;
+
+		this.board.forEach(row => {
 			row.forEach(piece => {
-				if (piece < 0) acc[PLAYER_BLACK]++;
-				else if (piece > 0) acc[PLAYER_WHITE]++;
-			});
-			return acc;
-		}, { [PLAYER_BLACK]: 0, [PLAYER_WHITE]: 0 });
+				if (piece === PIECES.manBlack) {
+					manBlack++;
+				} else if (piece === PIECES.manWhite) {
+					manWhite++;
+				} else if (piece === PIECES.kingBlack) {
+					kingBlack++;
+				} else if (piece === PIECES.kingWhite) {
+					kingWhite++;
+				}
+			})
+		})
+
+		this.piecesLeft = {
+			[PLAYER_BLACK]: (manBlack + kingBlack),
+			[PLAYER_WHITE]: (manWhite + kingWhite)
+		};
+
+		this.kingsLeft = {
+			[PLAYER_BLACK]: kingBlack,
+			[PLAYER_WHITE]: kingWhite
+		};
+
+		this.menLeft = {
+			[PLAYER_BLACK]: manBlack,
+			[PLAYER_WHITE]: manWhite
+		};
+
 		return this;
 	}
 

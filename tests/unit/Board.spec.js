@@ -21,24 +21,35 @@ describe('Board', () => {
 			expect(b.history).toHaveLength(0);
 		})
 
-		describe('piecesLeft property', () => {
-			it('has a piecesLeft property', () => {
-				expect(b).toHaveProperty('piecesLeft');
-			})
+		describe('piecesLeft properties', () => {
+			let props = ['piecesLeft', 'kingsLeft', 'menLeft'];
 
-			it('piecesLeft has a property for both players', () => {
-				const piecesLeftProps = Object.keys(b.piecesLeft);
-				expect(piecesLeftProps).toHaveLength(2);
-				expect(piecesLeftProps.includes(PLAYER_BLACK)).toBe(true);
-				expect(piecesLeftProps.includes(PLAYER_WHITE)).toBe(true);
-			})
+			it.each(props)(
+				'has a %s property',
+				leftProp => {
+					expect(b).toHaveProperty(leftProp);
+				}
+			);
+
+			it.each(props)(
+				'the %s property has properties for both players',
+				leftProp => {
+					expect(b[leftProp]).toHaveProperty(PLAYER_BLACK, 0);
+					expect(b[leftProp]).toHaveProperty(PLAYER_WHITE, 0);
+				}
+			)
 		})
 	})
 
 	describe('static methods', () => {
 		describe('copy', () => {
+			let b;
+			beforeEach(() => {
+				b = new Board(10);
+			})
+
 			it('returns a new Board with the same board array and size', () => {
-				let b = new Board(2).createBoard();
+				b.createBoard();
 				b.board = [[1, 2], [3, 4]];
 				let copied = Board.copy(b);
 
@@ -48,17 +59,21 @@ describe('Board', () => {
 				expect(b.board).not.toBe(copied.board);
 			})
 
-			it('keeps values in the piecesLeft object', () => {
-				let b = new Board(10);
-				b.piecesLeft = { a: 10, b: 20 };
-				let copied = Board.copy(b);
+			it.each([
+				['piecesLeft', { a: 1, b: 2 }],
+				['kingsLeft', { a: 2, b: 3 }],
+				['menLeft', { a: 4, b: 5 }]])(
+				'keeps values in the %s object',
+				(leftProp, val) => {
+					b[leftProp] = val;
+					let copied = Board.copy(b);
 
-				expect(b.piecesLeft).toEqual(copied.piecesLeft);
-				expect(b.piecesLeft).not.toBe(copied.piecesLeft);
-			})
+					expect(b[leftProp]).toEqual(copied[leftProp]);
+					expect(b[leftProp]).not.toBe(copied[leftProp]);
+				}
+			)
 
 			it('does not keep the history if not specified as parameter', () => {
-				let b = new Board(10);
 				b.history = [{ x: 1, y: 2, captured: { x: 3, y: 4 } }];
 
 				let copied = Board.copy(b);

@@ -26,6 +26,7 @@
 		<div class="gameState">
 			<div v-if="!winner" class="playing">
 				<p>Current player: {{currentPlayer}}</p>
+				<p>Zet {{game.moveNumber + 1}}</p>
 				<h2>Pieces Left</h2>
 				<p>White: {{whitePiecesLeft}}</p>
 				<p>Black: {{blackPiecesLeft}}</p>
