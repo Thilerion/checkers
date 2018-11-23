@@ -579,4 +579,68 @@ describe('Board', () => {
 			})
 		})
 	})
+
+	describe('filtering possible moves', () => {
+		let b;
+		beforeEach(() => {
+			b = new Board(8).createBoard();
+		})
+
+		describe('filter small paths', () => {
+			it('removes paths that are smaller than the longest path found', () => {
+				b.setPiece(3, 4, 1).setPiece(2, 3, -1).setPiece(2, 1, -1).setPiece(4, 5, -1);
+				const options = b.getAllPieceOptions('white');
+				const filtered = b.filterSmallPaths(JSON.parse(JSON.stringify(options)));
+
+				// const findPaths = (opts, x, y) => opts.find(opt => opt.piece.x === x && opt.piece.y === y).paths;
+
+				expect(options[0].paths).toHaveLength(2);				
+				expect(filtered[0].paths).toHaveLength(1);				
+			})
+
+			it('removes pieceOptions that have no paths left after removing the smallest ones', () => {
+				b.setPiece(2, 7, 1).setPiece(6, 7, 1).setPiece(3, 4, 1).setPiece(2, 3, -1).setPiece(2, 1, -1);
+
+				const options = b.getAllPieceOptions('white');
+				const filtered = b.filterSmallPaths(JSON.parse(JSON.stringify(options)));
+
+				expect(options).toHaveLength(3);
+				expect(filtered).toHaveLength(1);
+			})
+
+			it('changes nothing when all paths are equal length', () => {
+				b.setPiece(2, 7, 1).setPiece(6, 7, 1).setPiece(3, 4, 1).setPiece(2, 3, -1);
+
+				const options = b.getAllPieceOptions('white');
+				const filtered = b.filterSmallPaths(JSON.parse(JSON.stringify(options)));
+
+				expect(options).toEqual(filtered);
+			})
+		})
+
+		describe('filter moves if must hit', () => {
+			it('changes nothing if no hits are found', () => {
+				b.setPiece(0, 7, 1).setPiece(2, 7, 1).setPiece(4, 7, 1);
+
+				const options = b.getAllPieceOptions('white');
+				const filtered = b.filterMovesIfMustHit(JSON.parse(JSON.stringify(options)));
+
+				expect(options).toEqual(filtered);
+			})
+
+			it('removes all paths without captures if at least one is found', () => {
+				b.setPiece(0, 7, 1).setPiece(2, 7, 1).setPiece(4, 7, 1).setPiece(5, 6, -1);
+
+				const options = b.getAllPieceOptions('white');
+				const filtered = b.filterMovesIfMustHit(JSON.parse(JSON.stringify(options)));
+
+				expect(options.length).toBeGreaterThan(filtered.length);
+				options.forEach(piece => {
+					piece.paths.forEach(path => {
+						expect(path.captured).toBeFalsy();
+					})
+				})
+			})
+		})
+	})
 })
