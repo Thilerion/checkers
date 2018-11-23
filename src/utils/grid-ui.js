@@ -24,7 +24,7 @@ class Grid {
 	}
 	
 	findPiece(x, y) {
-		return this.grid[y][x].piece;
+		return this.pieces.find(piece => piece.x === x && piece.y === y);
 	}
 
 	createPieces(board) {
@@ -34,9 +34,8 @@ class Grid {
 				if (pieceId !== NO_PIECE) {
 					let playerId = pieceId < 0 ? PLAYER_BLACK : PLAYER_WHITE;
 					let type = Math.abs(pieceId);
-					this.grid[y][x].addPiece(new Piece(playerId, type));
-				} else {
-					this.grid[y][x].piece = null;
+					let piece = new Piece(x, y, playerId, type);
+					this.pieces.push(piece);
 				}
 			}
 		}
@@ -44,12 +43,15 @@ class Grid {
 	}
 
 	movePiece(x0, y0, x1, y1) {
-		const piece = this.grid[y0][x0].piece;
-		this.grid[y0][x0].piece = null;
-		this.grid[y1][x1].piece = piece;
+		console.log(`Moving piece ${x0},${y0} to ${x1},${y1}`);
+		const piece = this.findPiece(x0, y0);
+		piece.move(x1, y1);
+
+		console.log(this.findPiece(x1, y1));
 	}
 
 	capturePiece({ x, y }) {
+		console.log(`Capturing piece on ${x},${y}`);
 		this.findPiece(x, y).capture();
 	}
 
@@ -59,10 +61,14 @@ class Grid {
 }
 
 class Piece {
-	constructor(playerId, type) {
+	constructor(x, y, playerId, type) {
 		this.type = type;
 		this.playerId = playerId;
 		this.alive = true;
+		this.x = x;
+		this.y = y;
+
+		this.id = `initialPos: ${x},${y}`
 	}
 
 	capture() {
@@ -78,6 +84,11 @@ class Piece {
 			this.type = PIECE_KING;
 		}
 	}
+
+	move(x, y) {
+		this.x = x;
+		this.y = y;
+	}
 }
 
 class Square {
@@ -85,12 +96,6 @@ class Square {
 		this.squareColor = color;
 		this.x = x;
 		this.y = y;
-
-		this.piece = null;
-	}
-
-	addPiece(piece) {
-		this.piece = piece;
 	}
 }
 

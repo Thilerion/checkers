@@ -1,6 +1,34 @@
 <template>
 	<div id="app">
-		<div class="board">
+		<div class="board-container">
+			<div class="board board-background">
+				<SquareComponent
+					v-for="(square, sqIndex) in grid"
+					:key="sqIndex"
+					:square="square"
+					:selected="!!selected && selected.x === square.x && selected.y === square.y"
+					:canBeHit="availableHits.find(h => h.x === square.x && h.y === square.y)"
+					:canBeMovedTo="availableSquaresForMove.find(h => h.x === square.x && h.y === square.y)"
+					@click.native="select(square.x, square.y)"
+				>
+					<span class="square-coords">{{square.x}},{{square.y}}</span>
+				</SquareComponent>
+			</div>
+
+			<transition-group tag="div" name="move-piece" class="board board-pieces">
+				<PieceComponent
+					v-for="piece in pieces"
+					:key="`${piece.id},isAlive:${piece.alive}`"
+					:piece="piece"
+					:style="getPiecePosition(piece)"
+					@click.native="select(piece.x, piece.y)"
+					v-if="piece.alive"
+				/>
+			</transition-group>
+			
+		</div>
+
+		<!-- <div class="board">
 			<div
 				class="row"
 				v-for="(row, rowN) in grid"
@@ -22,7 +50,7 @@
 						:piece="square.piece" />
 				</SquareComponent>
 			</div>
-		</div>
+		</div> -->
 		<div class="gameState">
 			<div v-if="!winner" class="playing">
 				<p>Current player: {{currentPlayer}}</p>
@@ -57,13 +85,16 @@ export default {
 	},
 	computed: {
 		board() {
-			return this.game.gameBoard.board;
+			return this.game.gameBoard.board.flat();
 		},
 		grid() {
-			return this.game.checkerBoard.grid;
+			return this.game.checkerBoard.grid.flat();
 		},
 		size() {
 			return this.game.size;
+		},
+		pieces() {
+			return this.game.checkerBoard.pieces;
 		},
 		selected() {
 			return this.game.selected;
@@ -103,7 +134,14 @@ export default {
 	},
 	methods: {
 		select(x, y) {
+			console.log(x, y);
 			this.game.select(x, y);
+		},
+		getPiecePosition(piece) {
+			return {
+				'grid-column': piece.x + 1,
+				'grid-row': piece.y + 1
+			}
 		}
 	},
 	mounted() {
@@ -114,14 +152,19 @@ export default {
 
 <style>
 .board {
-	display: flex;
-	flex-direction: column;
+	display: grid;
+	grid-template-columns: repeat(8, 50px);
+	grid-template-rows: repeat(8, 50px);
+	grid-gap: 2px;
 	user-select: none;
 }
 
-.row {
-	display: flex;
-	flex-direction: row;
+.board-background {
+	position: absolute;
+}
+
+.move-piece-move {
+	transition: transform .3s;
 }
 
 .square-coords {
