@@ -203,14 +203,23 @@ class Board {
 		this.size = size;
 		this.board = [];
 
-		this.piecesLeft = {};
+		this.piecesLeft = {
+			[PLAYER_BLACK]: 0,
+			[PLAYER_WHITE]: 0
+		};
 
 		this.history = [];
 	}
 
-	static copy(oldBoard) {
+	static copy(oldBoard, keepHistory = false) {
 		let newBoard = new Board(oldBoard.size);
 		newBoard.board = JSON.parse(JSON.stringify(oldBoard.board));
+		newBoard.piecesLeft = { ...oldBoard.piecesLeft };
+
+		if (keepHistory) {
+			newBoard.history = JSON.parse(JSON.stringify(oldBoard.history));
+		}
+
 		return newBoard;
 	}
 
@@ -248,29 +257,6 @@ class Board {
 		return this;
 	}
 
-	isKing(x, y) {
-		let piece = this.getPieceAt(x, y);
-		return (piece === PIECES.kingBlack || piece === PIECES.kingWhite);
-	}
-
-	checkCrown(x, y) {
-		let piece = this.getPieceAt(x, y);
-		let player = this.getPiecePlayer(piece);
-		
-		if (this.isKing(x, y)) return false;
-
-		if ((player === PLAYER_WHITE && y === 0) ||
-			(player === PLAYER_BLACK && y === this.size - 1)) {
-			this.crownPiece(x, y, piece);
-			return true;
-		}
-		return false;
-	}
-
-	crownPiece(x, y, piece) {
-		this.board[y].splice(x, 1, (piece * 2));
-	}
-
 	removePiece(x, y) {
 		let piece = this.getPieceAt(x, y);
 		this.board[y].splice(x, 1, NO_PIECE);
@@ -291,12 +277,46 @@ class Board {
 	}
 
 	getPiecePlayer(piece) {
-		if (piece < 0) return PLAYER_BLACK;
-		else if (piece > 0) return PLAYER_WHITE;
+		if (piece === PIECES.manBlack || piece === PIECES.kingBlack) return PLAYER_BLACK;
+		else if (piece === PIECES.manWhite || piece === PIECES.kingWhite) return PLAYER_WHITE;
+		else return NO_PIECE;
 	}
 
 	isValidSquare(x, y) {
 		return (x >= 0 && x < this.size) && (y >= 0 && y < this.size) && ((x + y) % 2 === 1);
+	}
+
+	isKing(x, y) {
+		let piece = this.getPieceAt(x, y);
+		return (piece === PIECES.kingBlack || piece === PIECES.kingWhite);
+	}
+
+	checkCrown(x, y) {
+		let piece = this.getPieceAt(x, y);
+		let player = this.getPiecePlayer(piece);
+		
+		if (this.isKing(x, y)) return false;
+
+		if ((player === PLAYER_WHITE && y === 0) ||
+			(player === PLAYER_BLACK && y === this.size - 1)) {
+			this.crownPiece(x, y, piece);
+			return true;
+		}
+		return false;
+	}
+
+	crownPiece(x, y, piece) {
+		//this.board[y].splice(x, 1, (piece * 2));
+		let crownedPiece;
+		if (piece === PIECES.manBlack) {
+			crownedPiece = PIECES.kingBlack;
+		} else if (piece === PIECES.manWhite) {
+			crownedPiece = PIECES.kingWhite;
+		} else return this;
+
+		this.removePiece(x, y);
+		this.setPiece(x, y, crownedPiece);
+		return this;
 	}
 
 	// Check all directions around square, and returns those that are valid
@@ -414,8 +434,6 @@ class Board {
 			let x2 = dir.dx + foundEnemyPiece.x;
 			let y2 = dir.dy + foundEnemyPiece.y;
 
-			let isValidSquareDebug = this.isValidSquare(x2, y2);
-			let hasPieceDebug = this.getPieceAt(x2, y2);
 			if (this.isValidSquare(x2, y2) && !this.getPieceAt(x2, y2)) {
 				hits.push({ x: x2, y: y2, captured: { x: foundEnemyPiece.x, y: foundEnemyPiece.y } });
 			}
@@ -427,14 +445,13 @@ class Board {
 				for (let j = startIndex; j < dir.kingDiagonalDirs.length; j++) {
 					x2 = dir.kingDiagonalDirs[j].dx + x;
 					y2 = dir.kingDiagonalDirs[j].dy + y;
-					if (this.isValidSquare(x2, y2) && !this.getPieceAt(x2, y2)) {
+					if (this.isValidSquare(x2, y2) && this.getPieceAt(x2, y2) === NO_PIECE) {
 						hits.push({ x: x2, y: y2, captured: { x: foundEnemyPiece.x, y: foundEnemyPiece.y } });
 					} else {
 						break;
 					}
 				}
 			}
-			console.log(hits);
 			return hits;
 		}, [])
 	}
@@ -480,7 +497,7 @@ class Board {
 		let paths = [];
 		hits.forEach(hit => {
 			// For each hit that was found, check for next hits and add a path for this chain
-			this.makeMove(x, y, hit.x, hit.y);
+			this.makeMove(x, y, hit.x, hit.y, hit.captured);
 
 			// Make recursive call here, and for each found add to array
 			let nextPaths = this.getSubsequentHits(hit.x, hit.y);

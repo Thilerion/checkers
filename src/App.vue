@@ -119,6 +119,9 @@ export default {
 
 		// this.game.gameBoard.createBoard().setPiece(3, 4, 1).setPiece(5, 4, 1).setPiece(4, 3, -1);
 		// this.game.regenerateGrid().initializeTurn();
+
+		this.game.gameBoard.createBoard().setPiece(0, 7, 1).setPiece(5, 6, 1).setPiece(4, 5, -1).setPiece(3, 0, -1);
+		this.game.regenerateGrid().initializeTurn();
 	}
 };
 </script>
