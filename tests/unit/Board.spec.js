@@ -523,6 +523,10 @@ describe('Board', () => {
 
 				expect(white.find(piece => piece.piece.x === 5 && piece.piece.y === 6).paths).toHaveLength(1);
 			})
+
+			it('returns an empty array when no moves can be made', () => {
+				expect(b.getAllPieceOptions(PLAYER_BLACK)).toHaveLength(0);
+			})
 		})
 	})
 
