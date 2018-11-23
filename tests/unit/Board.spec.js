@@ -1,6 +1,7 @@
 import { PLAYER_BLACK, PLAYER_WHITE, RULES, PIECE_KING, PIECE_MAN, NO_PIECE, PIECES, SQUARE_TYPES } from '../../src/utils/constants.js';
 
 import Board from '../../src/utils/Board.js';
+import { normalize } from 'path';
 
 describe('Board', () => {
 	describe('initial properties', () => {	
@@ -541,6 +542,37 @@ describe('Board', () => {
 
 			it('returns an empty array when no moves can be made', () => {
 				expect(b.getAllPieceOptions(PLAYER_BLACK)).toHaveLength(0);
+			})
+		})
+
+		describe('normalize/combine all piece options into a single array', () => {
+			let pieceOptions;
+			beforeEach(() => {
+				b = new Board(8).createBoard().addInitialPieces();
+				pieceOptions = b.getAllPieceOptionsFiltered('white');
+			})
+
+			it('returns an array of paths, not of pieces', () => {
+				expect(pieceOptions).toHaveLength(4);
+				expect(b.normalizeAllPieceOptions(pieceOptions)).toHaveLength(7);
+			})
+
+			it('returns an array of objects with a piece property', () => {
+				let normalized = b.normalizeAllPieceOptions(pieceOptions);
+				
+				normalized.forEach(path => {
+					expect(path).toHaveProperty('piece');
+				});
+				expect(normalized[0].piece).toEqual(pieceOptions[0].piece);
+			})
+
+			it('returns an array of objects with a moves property, containing the path', () => {
+				let normalized = b.normalizeAllPieceOptions(pieceOptions);
+
+				normalized.forEach(path => {
+					expect(path).toHaveProperty('moves');
+					expect(path.moves).toHaveLength(1);
+				});
 			})
 		})
 	})
