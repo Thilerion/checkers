@@ -512,6 +512,17 @@ describe('Board creation', () => {
 
 				expect(b.getAllPieceOptions(PLAYER_WHITE)[0].piece).toEqual({ x: 0, y: 7 });
 			})
+
+			it('gets all correct hits and moves from each piece', () => {
+				b.setPiece(0, 7, 1).setPiece(5, 6, 1).setPiece(4, 5, -1).setPiece(3, 0, -1);
+				const white = b.getAllPieceOptions(PLAYER_WHITE);
+				const black = b.getAllPieceOptions(PLAYER_BLACK);
+
+				expect(white).toHaveLength(2);
+				expect(black).toHaveLength(2);
+
+				expect(white.find(piece => piece.piece.x === 5 && piece.piece.y === 6).paths).toHaveLength(1);
+			})
 		})
 	})
 })
