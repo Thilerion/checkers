@@ -1,6 +1,6 @@
 import { PLAYER_BLACK, PLAYER_WHITE, RULES, PIECE_KING, PIECE_MAN, NO_PIECE, PIECES, SQUARE_TYPES } from '../../src/utils/constants.js';
 
-import { Board } from '../../src/utils/game.js';
+import Board from '../../src/utils/Board.js';
 
 describe('Board', () => {
 	describe('initial properties', () => {	

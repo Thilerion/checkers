@@ -467,4 +467,4 @@ class Board {
 	}
 }
 
-export { Checkers, Board };
+export default Board;

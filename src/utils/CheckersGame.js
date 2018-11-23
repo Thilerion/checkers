@@ -1,6 +1,6 @@
 import { TIE, PLAYER_BLACK, PLAYER_WHITE, RULES } from './constants.js';
 import { Grid } from './grid-ui.js';
-import { Board } from './Board.js';
+import Board from './Board.js';
 
 class Checkers {
 	constructor(options = RULES) {

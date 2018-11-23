@@ -39,7 +39,7 @@
 </template>
 
 <script>
-import {Checkers} from './utils/game.js';
+import Checkers from './utils/CheckersGame.js';
 import {PIECES, SQUARE_TYPES, PLAYER_WHITE, PLAYER_BLACK} from './utils/constants.js';
 
 import SquareComponent from './components/Square.vue';
