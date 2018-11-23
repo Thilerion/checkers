@@ -90,6 +90,35 @@ class Checkers {
 		return paths.filter(path => path[0].x === x1 && path[0].y === y1)[0][0];
 	}
 
+	getNormalizedPaths() {
+		let paths = [];
+
+		this.currentPaths.forEach(piece => {
+			piece.paths.forEach(path => {
+				paths.push([piece.piece, ...path]);
+			})
+		})
+		return paths;
+	}
+
+	makeRandomMove() {
+		let moves = this.getNormalizedPaths();
+		let rnd = Math.floor(Math.random() * moves.length);
+		let pick = moves[rnd];
+
+		const { x: x0, y: y0 } = pick[0];
+		const { x: x1, y: y1 } = pick[1];
+
+		this.move(x0, y0, x1, y1);
+	}
+
+	playRandomGame() {
+		setTimeout(() => {
+			this.makeRandomMove();
+			if (!this.gameEnd) this.playRandomGame();
+		}, 1000);
+	}
+
 	isValidMove(x0, y0, x1, y1) {
 		let nextMoves = this.getNextMovesForPiece(x0, y0);
 		if (!nextMoves) return false;
