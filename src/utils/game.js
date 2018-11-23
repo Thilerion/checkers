@@ -138,7 +138,7 @@ class Checkers {
 		this.updateSelection(x1, y1);
 
 		const isHit = foundMove.captured != null;
-		this.updateGrid(x0, y0, x1, y1, isHit);
+		this.updateGrid(x0, y0, x1, y1, capture);
 
 		// if hit, shorten paths, check if more hits possible
 		if (isHit) {
@@ -161,14 +161,10 @@ class Checkers {
 		return this.finishTurn();
 	}
 
-	updateGrid(x0, y0, x1, y1, wasHit) {
+	updateGrid(x0, y0, x1, y1, capture) {
 		this.checkerBoard.movePiece(x0, y0, x1, y1);
-		if (wasHit) {
-			let hitPiece = {
-				x: (x0 + x1) / 2,
-				y: (y0 + y1) / 2
-			};
-			this.checkerBoard.capturePiece(hitPiece);
+		if (capture != null) {
+			this.checkerBoard.capturePiece({x: capture.x, y: capture.y});
 		}
 		return this;
 	}
