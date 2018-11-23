@@ -134,13 +134,12 @@ export default {
 	},
 	methods: {
 		select(x, y) {
-			console.log(x, y);
 			this.game.select(x, y);
 		},
 		getPiecePosition(piece) {
 			return {
-				'grid-column': piece.x + 1,
-				'grid-row': piece.y + 1
+				'grid-column': `${piece.x + 1} / span 1`,
+				'grid-row': `${piece.y + 1} / span 1`
 			}
 		}
 	},

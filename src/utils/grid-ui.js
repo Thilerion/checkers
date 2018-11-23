@@ -43,7 +43,6 @@ class Grid {
 	}
 
 	movePiece(x0, y0, x1, y1) {
-		console.log(`Moving piece ${x0},${y0} to ${x1},${y1}`);
 		const piece = this.findPiece(x0, y0);
 		piece.move(x1, y1);
 
@@ -51,7 +50,6 @@ class Grid {
 	}
 
 	capturePiece({ x, y }) {
-		console.log(`Capturing piece on ${x},${y}`);
 		this.findPiece(x, y).capture();
 	}
 
