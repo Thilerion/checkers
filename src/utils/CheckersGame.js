@@ -88,7 +88,7 @@ class Checkers {
 
 		if (this.drawCounters.oneKingTwoPieces > 10 ||
 			this.drawCounters.oneKingThreePieces > 32 ||
-			this.moveNumber > (this.automaticDrawAfterMoves * 2)) {
+			this.moveNumber > (this.automaticDrawAfterMoves)) {
 			this.gameEnd = true;
 			this.winner = TIE;
 			return this;
