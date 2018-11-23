@@ -106,6 +106,9 @@ class Board {
 		return this;
 	}
 
+	/* 
+	-----  PIECE AND SQUARE UTILITIES  -----
+	*/
 	removePiece(x, y) {
 		let piece = this.getPieceAt(x, y);
 		this.board[y].splice(x, 1, NO_PIECE);
@@ -167,6 +170,10 @@ class Board {
 		this.setPiece(x, y, crownedPiece);
 		return this;
 	}
+
+	/* 
+	-----  MOVE CHECKING  -----
+	*/
 
 	// Check all directions around square, and returns those that are valid
 	// Also adds if it is forward or not (normally pieces can't move backwards)
@@ -451,6 +458,10 @@ class Board {
 			return acc;
 		}, [])
 	}
+
+	/* 
+	-----  MAKING AND UNDOING MOVES  -----
+	*/
 
 	makeMove(x0, y0, x1, y1, captured = null) {
 		let move = { x0, x1, y0, y1 };
