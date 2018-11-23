@@ -1,4 +1,4 @@
-import { PLAYER_BLACK, PLAYER_WHITE, RULES, PIECE_KING, PIECE_MAN, NO_PIECE, PIECES, SQUARE_TYPES } from './constants.js';
+import { TIE, PLAYER_BLACK, PLAYER_WHITE, RULES, PIECE_KING, PIECE_MAN, NO_PIECE, PIECES, SQUARE_TYPES } from './constants.js';
 
 import { Grid } from './grid-ui.js';
 
@@ -11,11 +11,12 @@ const DIRECTIONS = [
 
 class Checkers {
 	constructor(options = RULES) {
-		const { size, firstMove, captureBack, flyingKings } = options;
+		const { size, firstMove, captureBack, flyingKings, automaticDrawAfterMoves } = options;
 		this.size = size;
 		this.firstMove = firstMove;
 		this.captureBack = captureBack;
 		this.flyingKings = flyingKings;
+		this.automaticDrawAfterMoves = automaticDrawAfterMoves;
 
 		this.gameBoard = new Board(this.size).createBoard().addInitialPieces();
 		this.checkerBoard = new Grid(this.size).createPieces(this.gameBoard.board);
@@ -31,8 +32,7 @@ class Checkers {
 		this.moveNumber = 0;
 
 		this.drawCounters = {
-			oneKing: null,
-			oneKingTwoKings: null,
+			oneKingTwoPieces: null,
 			oneKingThreePieces: null,
 			noCapturesOnlyKingsMoved: null
 		}
@@ -73,6 +73,56 @@ class Checkers {
 	}
 
 	checkDraw() {
+		// debugger;
+		const kingsLeft = this.gameBoard.kingsLeft;
+		const piecesLeft = this.gameBoard.piecesLeft;
+
+		const PW = PLAYER_WHITE;
+		const PB = PLAYER_BLACK;
+
+		/* draw / remise if:
+			1.	one king against at most 2 pieces (among which is 1+ king) after 5 moves
+			2.	one king against at most 3 pieces (among which is 1+ king) after 16 moves
+			3.	25 moves each (in sequence) have been made only using kings,
+					and no pieces have been captured
+		*/
+
+		/* OWN RULE:
+			draw if more moves than in options ('automaticDrawAfterMoves')
+		*/
+
+		// TODO: draw condition 3 must still be implemented
+
+		if (this.drawCounters.oneKingTwoPieces > 10 ||
+			this.drawCounters.oneKingThreePieces > 32 ||
+			this.moveNumber > (this.automaticDrawAfterMoves * 2)) {
+			this.gameEnd = true;
+			this.winner = TIE;
+			return this;
+		}
+		
+		if (this.drawCounters.oneKingTwoPieces != null) {
+			this.drawCounters.oneKingTwoPieces++;
+		} else {
+			// check if should be set to one
+			if (kingsLeft[PW] === 1 && piecesLeft[PW] === 1 && kingsLeft[PB] >= 1 && piecesLeft[PB] <= 2) {
+				this.drawCounters.oneKingTwoPieces = 1;
+			} else if (kingsLeft[PB] === 1 && piecesLeft[PB] === 1 && kingsLeft[PW] >= 1 && piecesLeft[PW] <= 2) {
+				this.drawCounters.oneKingTwoPieces = 1;
+			}
+		}
+
+		if (this.drawCounters.oneKingThreePieces != null) {
+			this.drawCounters.oneKingThreePieces++;
+		} else {
+			// check if should be set to one
+			if (kingsLeft[PW] === 1 && piecesLeft[PW] === 1 && kingsLeft[PB] >= 1 && piecesLeft[PB] <= 3) {
+				this.drawCounters.oneKingThreePieces = 1;
+			} else if (kingsLeft[PB] === 1 && piecesLeft[PB] === 1 && kingsLeft[PW] >= 1 && piecesLeft[PW] <= 3) {
+				this.drawCounters.oneKingThreePieces = 1;
+			}
+		}
+			
 		return this;
 	}
 
@@ -81,11 +131,6 @@ class Checkers {
 		// win if opponent no pieces left
 		this.checkWin();
 		if (this.gameEnd) return this;
-		// draw / remise if:
-			// both one king
-			// one king vs two kings (after 5 moves each)
-			// three pieces among which one king, against one king (after 16 moves each)
-			// after 25 moves each without captures, and only having moved with kings
 		return this.checkDraw();
 	}
 
@@ -94,7 +139,7 @@ class Checkers {
 		this.selected = null;
 
 		if (!this.gameEnd) {
-			return this.nextPlayer().initializeTurn();
+			return this.nextPlayer().initializeTurn().checkGameEnd();
 		}
 	}
 

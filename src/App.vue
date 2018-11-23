@@ -108,7 +108,8 @@ export default {
 		}
 	},
 	mounted() {
-		
+		this.game.gameBoard.createBoard().setPiece(0, 7, 2).setPiece(1, 0, -2).setPiece(3, 0, -1).setPiece(1, 6, -1).setPiece(2, 7, 1);
+		this.game.initializeTurn().regenerateGrid();
 	}
 };
 </script>

@@ -7,6 +7,7 @@ const PIECE_MAN = 1;
 const PIECE_KING = 2;
 
 const NO_PIECE = 0;
+const TIE = 'tie';
 
 const SQUARE_TYPES = {
 	white: 'whiteSquare',
@@ -17,7 +18,8 @@ const RULES = {
 	size: 10,
 	firstMove: PLAYER_WHITE,
 	captureBack: true,
-	flyingKings: true
+	flyingKings: true,
+	automaticDrawAfterMoves: 100
 }
 
 const PIECES = {
@@ -29,4 +31,4 @@ const PIECES = {
 
 RULES.size = 8;
 
-export { PLAYER_BLACK, PLAYER_WHITE, RULES, PIECE_KING, PIECE_MAN, PIECES, NO_PIECE, SQUARE_TYPES };
+export { TIE, PLAYER_BLACK, PLAYER_WHITE, RULES, PIECE_KING, PIECE_MAN, PIECES, NO_PIECE, SQUARE_TYPES };
