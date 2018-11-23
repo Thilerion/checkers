@@ -395,6 +395,10 @@ class Board {
 		return playerPieces;
 	}
 
+	getAllPieceOptionsFiltered(player) {
+		return this.filterSmallPaths(this.filterMovesIfMustHit(this.getAllPieceOptions(player)));
+	}
+
 	// accepts the return value from getAllPieceOptions, and returns all hits if a hit was found, or everything (if no hit was found)
 	filterMovesIfMustHit(pieces) {
 		// The getPieceOptions method returns only hits or only moves, so only one path has to be checked for every piece

@@ -657,5 +657,17 @@ describe('Board', () => {
 				})
 			})
 		})
+
+		describe('getAllPieceOptionsFiltered', () => {
+			it('returns the piece options, ran through both filter functions', () => {
+				b.setPiece(2, 7, 1).setPiece(6, 7, 1).setPiece(3, 4, 1).setPiece(2, 3, -1).setPiece(2, 1, -1);
+
+				const manualFilter = b.filterSmallPaths(b.getAllPieceOptions('white'));
+				const methodFilter = b.getAllPieceOptionsFiltered('white');
+
+				expect(manualFilter).toEqual(methodFilter);
+				expect(manualFilter).not.toBe(methodFilter);
+			})
+		})
 	})
 })
