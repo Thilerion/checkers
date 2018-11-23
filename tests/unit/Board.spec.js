@@ -182,6 +182,36 @@ describe('Board creation', () => {
 		})
 	})
 
+	describe('getPiecePlayer method', () => {
+		it('returns the to which player the piece belongs to', () => {
+			let b = new Board(6).createBoard();
+			expect(b.getPiecePlayer(PIECES.manBlack)).toBe(PLAYER_BLACK);
+			expect(b.getPiecePlayer(PIECES.manWhite)).toBe(PLAYER_WHITE);
+			expect(b.getPiecePlayer(PIECES.kingWhite)).toBe(PLAYER_WHITE);
+		})
+	})
+
+	describe('isValidSquare method', () => {
+		let b = new Board(6).createBoard();
+
+		it('returns false when coords are out of the board', () => {
+			expect(b.isValidSquare(-1, 0)).toBe(false);	
+			expect(b.isValidSquare(1, -1)).toBe(false);	
+			expect(b.isValidSquare(6, 5)).toBe(false);	
+			expect(b.isValidSquare(3, 6)).toBe(false);	
+		})
+
+		it('returns false when coord belongs to white square', () => {
+			expect(b.isValidSquare(0, 0)).toBe(false);
+			expect(b.isValidSquare(2, 4)).toBe(false);
+		})
+
+		it('returns true when coord is on board and black square', () => {
+			expect(b.isValidSquare(1, 0)).toBe(true);
+			expect(b.isValidSquare(4, 5)).toBe(true);
+		})
+	})
+
 	describe('isKing method', () => {
 		it('returns true when a piece is a king', () => {
 			let b = new Board(6).createBoard();
@@ -192,6 +222,296 @@ describe('Board creation', () => {
 			expect(b.isKing(0, 0)).toBe(true);
 			expect(b.isKing(2, 1)).toBe(false);
 			expect(b.isKing(3, 2)).toBe(true);
+		})
+	})
+
+	describe('checkCrown method', () => {
+		let b = new Board(8).createBoard();
+		beforeEach(() => {
+			b = new Board(8).createBoard();
+		})
+
+		it('returns false when piece already is king', () => {
+			b.setPiece(1, 0, -2);
+			expect(b.checkCrown(1, 0)).toBe(false);
+		})
+
+		it('returns true when piece is on opponent\'s side of board', () => {
+			b.setPiece(3, 0, 1).setPiece(0, 7, -1);
+			expect(b.checkCrown(3, 0)).toBe(true);
+			expect(b.checkCrown(0, 7)).toBe(true);
+		})
+
+		it('returns false when own piece on edge of board', () => {
+			b.setPiece(3, 0, -1).setPiece(0, 7, 1);
+			expect(b.checkCrown(3, 0)).toBe(false);
+			expect(b.checkCrown(0, 7)).toBe(false);
+		})
+
+		it('returns false otherwise', () => {
+			expect(b.checkCrown(2, 3)).toBe(false);
+			b.setPiece(4, 3, 1);
+			expect(b.checkCrown(4, 3)).toBe(false);
+		})
+	})
+
+	describe('crownPiece method', () => {
+		it('replaces a man with a king', () => {
+			let b = new Board(8).createBoard().addInitialPieces();
+			expect(b.getPieceAt(1, 0)).toBe(PIECES.manBlack);
+			b.crownPiece(1, 0, PIECES.manBlack);
+			expect(b.getPieceAt(1, 0)).toBe(PIECES.kingBlack);
+		})
+	})
+
+	describe('checking correct pieces and hits for a piece', () => {
+		let b;
+
+		describe('getting correct moves for a man piece', () => {
+			beforeEach(() => {
+				b = new Board(6).createBoard();
+			})
+
+			it('returns 2 forward moves for a single piece in the center', () => {
+				b.setPiece(2, 3, PIECES.manBlack);
+				let moves = b.getPieceMoves(2, 3);				
+				let expectedMoves = [{ x: 1, y: 4 }, { x: 3, y: 4 }];
+
+				expect(moves).toContainEqual(expectedMoves[0]);
+				expect(moves).toContainEqual(expectedMoves[1]);
+				expect(moves).toHaveLength(2);
+			})
+
+			it('returns less moves when spots are taken by other pieces', () => {
+				b.setPiece(2, 3, PIECES.manBlack).setPiece(1, 2, PIECES.manBlack).setPiece(3, 2, PIECES.manBlack);
+				expect(b.getPieceMoves(3, 2)).toHaveLength(1);
+			})
+
+			it('returns less moves when spots are outside of board', () => {
+				b.setPiece(0, 3, PIECES.manWhite);
+				expect(b.getPieceMoves(0, 3)).toHaveLength(1);
+			})
+		})
+
+		describe('getting correct moves for a king piece', () => {
+			beforeEach(() => {
+				b = new Board(6).createBoard();
+			})
+
+			it('returns moves in all 4 diagonals', () => {
+				b.setPiece(2, 3, 2);
+				let moves = b.getPieceMoves(2, 3);
+
+				expect(moves).toContainEqual({ x: 1, y: 2 });
+				expect(moves).toContainEqual({ x: 3, y: 2 });
+				expect(moves).toContainEqual({ x: 1, y: 4 });
+				expect(moves).toContainEqual({ x: 3, y: 4 });
+			})
+
+			it('returns all moves in a diagonal', () => {
+				b.setPiece(2, 5, 2);
+				let moves = b.getPieceMoves(2, 5);
+
+				expect(moves).toHaveLength(5);
+				expect(moves).toContainEqual({ x: 5, y: 2 });
+				expect(moves).toContainEqual({ x: 0, y: 3 });
+			})
+
+			it('does not return moves beyond inhabited squares', () => {
+				b.setPiece(5, 4, 2).setPiece(2, 1, 1);
+				let moves = b.getPieceMoves(5, 4);
+
+				expect(moves).toContainEqual({ x: 3, y: 2 });
+				expect(moves).not.toContainEqual({ x: 1, y: 0 });
+			})
+		})
+
+		describe('getting correct hits for a man piece', () => {
+			beforeEach(() => {
+				b = new Board(6).createBoard();
+			})
+
+			it('returns hits for every piece it can hit', () => {
+				b.setPiece(2, 3, 1).setPiece(1, 2, -1).setPiece(3, 2, -1);
+				let hits = b.getPieceHits(2, 3);
+
+				expect(hits).toHaveLength(2);
+			})
+
+			it('does not return hits for own pieces', () => {
+				b.setPiece(2, 3, 1).setPiece(1, 2, -1).setPiece(3, 2, 1);
+				let hits = b.getPieceHits(2, 3);
+
+				expect(hits).toHaveLength(1);
+			})
+
+			it('returns backwards hits as well', () => {
+				b.setPiece(2, 3, 1).setPiece(1, 4, -1);
+				let hits = b.getPieceHits(2, 3);
+
+				expect(hits).toHaveLength(1);
+			})
+
+			it('returns next coordinates, and a captured object with the coordinates of the piece that was hit', () => {
+				b.setPiece(2, 3, 1).setPiece(3, 2, -1);
+				let hits = b.getPieceHits(2, 3);
+				let expectedHit = { x: 4, y: 1, captured: { x: 3, y: 2 } };
+
+				expect(hits).toContainEqual(expectedHit);
+			})
+		})
+
+		describe('getting correct hits for a king piece', () => {
+			beforeEach(() => {
+				b = new Board(6).createBoard();
+			})
+
+			it('captures a piece in the same way a man piece can', () => {
+				b.setPiece(2, 5, 2).setPiece(3, 4, -1);
+				let hits = b.getPieceHits(2, 5);
+				let expectedHit = { x: 4, y: 3, captured: { x: 3, y: 4 } };
+
+				expect(hits).toContainEqual(expectedHit);
+			})
+
+			it('can capture a piece more than 1 square away', () => {
+				b.setPiece(2, 5, 2).setPiece(4, 3, -1);
+				let hits = b.getPieceHits(2, 5);
+				let expectedHit = { x: 5, y: 2, captured: { x: 4, y: 3 } };
+
+				expect(hits).toContainEqual(expectedHit);
+			})
+
+			it('returns hits with all valid squares behind the piece that was captured', () => {
+				b.setPiece(2, 5, 2).setPiece(3, 4, -1);
+				let hits = b.getPieceHits(2, 5);
+				let expectedMoves = hits.filter(hit => {
+					return hit.captured.x === 3 && hit.captured.y === 4;
+				});
+
+				expect(expectedMoves).toHaveLength(2);
+			})
+		})
+
+		describe('getting combined move or hit options for a piece', () => {
+			beforeEach(() => {
+				b = new Board(8).createBoard().setPiece(3, 4, 1);
+			})
+
+			describe('piece moves', () => {
+				it('returns as many moves as the getPieceMoves method does', () => {
+					expect(b.getPieceMoves(3, 4).length).toBe(b.getPieceOptions(3, 4).length);
+
+					b.removePiece(3, 4);
+					b.setPiece(3, 4, 2);
+					expect(b.getPieceMoves(3, 4).length).toBe(b.getPieceOptions(3, 4).length);
+				})
+
+				it('returns path arrays instead of move objects, with path of length 1 for moves', () => {
+					let path = b.getPieceOptions(3, 4);
+
+					expect(path[0]).toHaveLength(1);
+				})
+
+				it('adds a capture property with value null for moves', () => {
+					let path = b.getPieceOptions(3, 4);
+
+					expect(path[0][0].captured).toBe(null);
+				})
+			})
+
+			describe('piece hits', () => {
+				it('returns only hits when at least one hit is possible', () => {
+					b.setPiece(4, 3, -1);
+
+					expect(b.getPieceOptions(3, 4)).toHaveLength(1);
+				})
+
+				it('returns a single path for two subsequent possible hits', () => {
+					b.setPiece(4, 3, -1);
+					b.setPiece(6, 1, -1);
+
+					expect(b.getPieceOptions(3, 4)).toHaveLength(1);
+				})
+
+				it('returns paths containing all hits possible in that path', () => {
+					b.setPiece(4, 3, -1);
+					b.setPiece(6, 1, -1);
+
+					expect(b.getPieceOptions(3, 4)[0]).toHaveLength(2);
+				})
+
+				it('returns multiple paths when the multiple initial hits are possible', () => {
+					b.setPiece(4, 3, -1).setPiece(2, 3, -1).setPiece(6, 1, -1);
+
+					expect(b.getPieceOptions(3, 4)).toHaveLength(2);
+				})
+
+				it('returns a path for each time multiple options are possible', () => {
+					b.setPiece(4, 3, -1).setPiece(4, 1, -1).setPiece(6, 3, -1);
+					const options = b.getPieceOptions(3, 4);
+
+					expect(options).toHaveLength(2);
+					
+					options.forEach(option => {
+						expect(option).toHaveLength(2);
+					})
+				})
+
+				it('creates a path for every hit a king can make for every final landing spot that is available', () => {
+					b.setPiece(0, 7, -2).setPiece(5, 4, 1).setPiece(6, 3, 1);
+					const options = b.getPieceOptions(0, 7);
+
+					expect(options).toHaveLength(5);
+				})
+
+				it('returns a captured property for every hit', () => {
+					b.setPiece(4, 3, -1);
+
+					expect(b.getPieceOptions(3, 4)[0][0]).toHaveProperty('captured');
+				})
+
+				it('can handle hitting two ways in a loop', () => {
+					b.setPiece(4, 3, -1).setPiece(2, 3, -1).setPiece(2, 1, -1).setPiece(4, 1, -1);
+					const options = b.getPieceOptions(3, 4);
+
+					expect(options).toHaveLength(2);
+					
+					options.forEach(option => {
+						expect(option).toHaveLength(4);
+						expect(option[3].x).toBe(3);
+						expect(option[3].y).toBe(4);
+					})
+				})
+			})
+
+			it('does not alter the original Board object', () => {
+				b.setPiece(4, 3, -1);
+				let historyBefore = JSON.parse(JSON.stringify(b.history));
+				let piecesLeftBefore = JSON.parse(JSON.stringify(b.piecesLeft));
+				b.getPieceOptions(3, 4);
+				expect(b.history).toEqual(historyBefore);
+				expect(b.piecesLeft).toEqual(piecesLeftBefore);
+			})
+		})
+
+		describe('getting all options from all pieces', () => {
+			beforeEach(() => {
+				b = new Board(8).createBoard();
+			})
+
+			it('returns an array with items for each piece that has options', () => {
+				b.addInitialPieces();
+
+				expect(b.getAllPieceOptions(PLAYER_WHITE)).toHaveLength(4);
+				expect(b.getAllPieceOptions(PLAYER_BLACK)).toHaveLength(4);
+			})
+
+			it('has an array with objects containing the coordinates for the piece', () => {
+				b.setPiece(0, 7, 1);
+
+				expect(b.getAllPieceOptions(PLAYER_WHITE)[0].piece).toEqual({ x: 0, y: 7 });
+			})
 		})
 	})
 })

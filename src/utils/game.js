@@ -478,7 +478,6 @@ class Board {
 
 		// Hits were found, so now to loop over all hits, and check for any subsequent hits
 		let pathsForPiece = [];
-		debugger;
 		hits.forEach(hit => {
 			board.makeMove(x, y, hit.x, hit.y, hit.captured);
 			
