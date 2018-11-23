@@ -2,7 +2,7 @@ import { PLAYER_BLACK, PLAYER_WHITE, RULES, PIECE_KING, PIECE_MAN, NO_PIECE, PIE
 
 import { Board } from '../../src/utils/game.js';
 
-describe('Board creation', () => {
+describe('Board', () => {
 	describe('initial properties', () => {	
 		let b;		
 		beforeEach(() => {
@@ -522,6 +522,56 @@ describe('Board creation', () => {
 				expect(black).toHaveLength(2);
 
 				expect(white.find(piece => piece.piece.x === 5 && piece.piece.y === 6).paths).toHaveLength(1);
+			})
+		})
+	})
+
+	describe('making and undoing moves', () => {
+		let b;
+		beforeEach(() => {
+			b = new Board(8).createBoard();
+		})
+
+		describe('makeMove method', () => {
+			it('removes a piece and sets it at a new location', () => {
+				b.setPiece(0, 7, 1).makeMove(0, 7, 1, 6);
+				expect(b.board[7][0]).toBe(NO_PIECE);
+				expect(b.board[6][1]).toBe(1);
+			})
+
+			it('removes an extra piece if it gets a captured paramater', () => {
+				b.setPiece(0, 7, 1).setPiece(1, 6, -1).makeMove(0, 7, 2, 5, { x: 1, y: 6 });
+				expect(b.board[7][0]).toBe(NO_PIECE);
+				expect(b.board[6][1]).toBe(NO_PIECE);
+				expect(b.board[5][2]).toBe(1);
+			})
+
+			it('pushes the move to the board history', () => {
+				b.setPiece(0, 7, 1).setPiece(1, 6, -1).makeMove(0, 7, 2, 5, { x: 1, y: 6 });
+
+				expect(b.history).toHaveLength(1);
+				expect(b.history).toContainEqual({ x0: 0, y0: 7, x1: 2, y1: 5, captured: { x: 1, y: 6, type: -1 } });
+			})
+		})
+
+		describe('undoMove method', () => {
+			beforeEach(() => {
+				b.setPiece(0, 7, 1).setPiece(1, 6, -1).makeMove(0, 7, 2, 5, { x: 1, y: 6 });
+			})
+
+			it('reduces length of history array by one', () => {
+				expect(b.history.length).not.toBe(b.undoMove().history.length);
+			})
+
+			it('reverts the move', () => {
+				b.undoMove();
+				expect(b.board[7][0]).toBe(1);
+				expect(b.board[5][2]).toBe(NO_PIECE);
+			})
+
+			it('reverts the capture', () => {
+				b.undoMove();
+				expect(b.board[6][1]).toBe(-1);
 			})
 		})
 	})
