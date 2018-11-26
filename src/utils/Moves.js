@@ -235,14 +235,19 @@ class Moves {
 	_getPieceOptions(x, y) {
 		let hits = this._getPieceRecursiveHits(x, y);
 
+		let options = [];
+		let mustHit = false;
+
 		if (hits.length <= 0) {
 			let moves = this._getPieceMoves(x, y);
-			return moves.map(move => {
+			options.push(...moves.map(move => {
 				return [{ ...move, captured: null }];
-			})
+			}));
 		} else {
-			return hits;
+			mustHit = true;
+			options.push(...hits);
 		}
+		return { piece: {x, y}, mustHit, moves: options };
 	}
 
 	_getPieceRecursiveHits(x, y) {
@@ -289,4 +294,4 @@ let arr = gameState.create2dArray();
 let m = new Moves({ size: 10, captureBack: true, flyingKings: true });
 m.findValidMoves(arr, PLAYER_WHITE);
 
-let options = m._getPieceRecursiveHits(2, 5); /*?*/
+let options = m._getPieceOptions(2, 5); /*?*/
