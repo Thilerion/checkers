@@ -25,8 +25,11 @@ class Moves {
 
 	findValidMoves(boardArr, player) {
 		this.board = boardArr;
-		this.validMoves = [];
 		this.player = player;
+		this.validMoves = [];
+		this._createValidMoves();
+
+		return this.validMoves;
 	}
 
 	_isKing(x, y) {
@@ -212,26 +215,6 @@ class Moves {
 		}, [])
 	}
 
-	_getSubsequentHits(x, y) {
-		let hits = this._getPieceHits(x, y);
-
-		if (hits.length <= 0) {
-			return [this.hitHistory];
-		}
-
-		let paths = [];
-		hits.forEach(hit => {
-			this._simulateMove(x, y, hit.x, hit.y, hit.captured);
-
-			let nextPaths = this._getSubsequentHits(hit.x, hit.y);
-
-			paths.push(...nextPaths);
-
-			this._undoMove();
-		})
-		return paths;
-	}
-
 	_getPieceOptions(x, y) {
 		let hits = this._getPieceRecursiveHits(x, y);
 
@@ -285,13 +268,35 @@ class Moves {
 
 		return paths;
 	}
+
+	_createValidMoves() {
+		// TODO: only longest length and mustHits
+		let moves = [];
+		let mustHit = false;
+
+		for (let y = 0; y < this.size; y++) {
+			for (let x = 0; x < this.size; x++) {
+				if (this._isPieceFromPlayer(x, y)) {
+					let pieceOptions = this._getPieceOptions(x, y);
+
+					if (pieceOptions.moves.length > 0) {
+						// if (mustHit && !pieceOptions.mustHit) continue;
+						// else if (!mustHit && pieceOptions.mustHit) mustHit = true;
+						moves.push(pieceOptions);
+					}					
+				}
+			}
+		}
+
+		this.validMoves = moves;
+		
+		return this;
+	}
 }
 
 export default Moves;
 
-let gameState = new GameState({ ...RULES, size: 10 }).addPiece(2, 5, 1).addPiece(1, 4, -1).addPiece(3, 6, -1).addPiece(5, 6, -1);
+let gameState = new GameState({ ...RULES, size: 10 }).createInitial()
 let arr = gameState.create2dArray();
 let m = new Moves({ size: 10, captureBack: true, flyingKings: true });
-m.findValidMoves(arr, PLAYER_WHITE);
-
-let options = m._getPieceOptions(2, 5); /*?*/
+m.findValidMoves(arr, PLAYER_WHITE); /*?*/
