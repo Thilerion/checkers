@@ -14,7 +14,7 @@ class Checkers {
 		this.gameBoard = new Board(this.size).createBoard().addInitialPieces();
 		this.checkerBoard = new Grid(this.size).createPieces(this.gameBoard.board);
 
-		this.currentPlayer = this.firstMove;
+		// this.currentPlayer = this.firstMove;
 		this.selected = null;
 		this.currentPaths = [];
 		this.piecesLeft = {};
@@ -22,13 +22,13 @@ class Checkers {
 		this.gameEnd = false;
 		this.winner = null;
 
-		this.moveNumber = 0;
+		// this.moveNumber = 0;
 
-		this.drawCounters = {
-			oneKingTwoPieces: null,
-			oneKingThreePieces: null,
-			noCapturesOnlyKingsMoved: null
-		}
+		// this.drawCounters = {
+		// 	oneKingTwoPieces: null,
+		// 	oneKingThreePieces: null,
+		// 	noCapturesOnlyKingsMoved: null
+		// }
 
 		this.initializeTurn();
 	}

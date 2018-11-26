@@ -1,16 +1,16 @@
 import { PLAYER_BLACK, PLAYER_WHITE, NO_PIECE, PIECES } from './constants.js';
 
-const DIRECTIONS = [
-	{ dx: 1, dy: -1 },
-	{ dx: 1, dy: 1 },
-	{ dx: -1, dy: 1 },
-	{ dx: -1, dy: -1 }
-];
+// const DIRECTIONS = [
+// 	{ dx: 1, dy: -1 },
+// 	{ dx: 1, dy: 1 },
+// 	{ dx: -1, dy: 1 },
+// 	{ dx: -1, dy: -1 }
+// ];
 
 class Board {
 	constructor(size) {
-		this.size = size;
-		this.board = [];
+		// this.size = size;
+		// this.board = [];
 
 		this.piecesLeft = {
 			[PLAYER_BLACK]: 0,
@@ -27,7 +27,7 @@ class Board {
 			[PLAYER_WHITE]: 0
 		}
 
-		this.history = [];
+		// this.history = [];
 	}
 
 	static copy(oldBoard, keepHistory = false) {
@@ -134,14 +134,14 @@ class Board {
 		else return NO_PIECE;
 	}
 
-	isValidSquare(x, y) {
-		return (x >= 0 && x < this.size) && (y >= 0 && y < this.size) && ((x + y) % 2 === 1);
-	}
+	// isValidSquare(x, y) {
+	// 	return (x >= 0 && x < this.size) && (y >= 0 && y < this.size) && ((x + y) % 2 === 1);
+	// }
 
-	isKing(x, y) {
-		let piece = this.getPieceAt(x, y);
-		return (piece === PIECES.kingBlack || piece === PIECES.kingWhite);
-	}
+	// isKing(x, y) {
+	// 	let piece = this.getPieceAt(x, y);
+	// 	return (piece === PIECES.kingBlack || piece === PIECES.kingWhite);
+	// }
 
 	checkCrown(x, y) {
 		let piece = this.getPieceAt(x, y);
