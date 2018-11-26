@@ -238,43 +238,47 @@ class Moves {
 		if (hits.length <= 0) {
 			let moves = this._getPieceMoves(x, y);
 			return moves.map(move => {
-				return [{ ...move, captured: null, next: null }];
+				return [{ ...move, captured: null }];
 			})
 		} else {
 			return hits;
 		}
 	}
 
-	_getRecursiveNextHits(x, y) {
-		let nextHits = this._getPieceHits(x, y);
-
-		if (nextHits.length <= 0) return null;
-
-		return nextHits.map(nextHit => {
-			this._simulateMove(x, y, nextHit.x, nextHit.y, nextHit.captured);
-			let next = this._getRecursiveNextHits(nextHit.x, nextHit.y);
-			this._undoMove();
-
-			return { ...nextHit, next };
-		})
-	}
-
 	_getPieceRecursiveHits(x, y) {
+		let paths = [];
+
+		const getNextHits = (x, y) => {
+			let nextHits = this._getPieceHits(x, y).map(h => {
+				return { x: h.x, y: h.y, captured: h.captured };
+			});
+
+			if (nextHits.length <= 0) {
+				let curPath = JSON.parse(JSON.stringify(this.hitHistory)).map(path => {
+					return { x: path.x1, y: path.y1, captured: path.captured };
+				})
+				paths.push(curPath);
+				return;
+			}
+
+			nextHits.forEach(nextHit => {
+				this._simulateMove(x, y, nextHit.x, nextHit.y, nextHit.captured);
+				getNextHits(nextHit.x, nextHit.y);
+				this._undoMove();
+			})
+		}
+
 		let initialHits = this._getPieceHits(x, y).map(h => {
 			return { x: h.x, y: h.y, captured: h.captured };
 		});
 
-		if (initialHits.length <= 0) {
-			return [];
-		}
-
-		return initialHits.map(initHit => {
+		initialHits.forEach(initHit => {
 			this._simulateMove(x, y, initHit.x, initHit.y, initHit.captured);
-			let next = this._getRecursiveNextHits(initHit.x, initHit.y);
+			getNextHits(initHit.x, initHit.y);
 			this._undoMove();
-
-			return { ...initHit, next };
 		})
+
+		return paths;
 	}
 }
 
@@ -285,4 +289,4 @@ let arr = gameState.create2dArray();
 let m = new Moves({ size: 10, captureBack: true, flyingKings: true });
 m.findValidMoves(arr, PLAYER_WHITE);
 
-m._getPieceOptions(2, 5); /*?*/
+let options = m._getPieceRecursiveHits(2, 5); /*?*/
