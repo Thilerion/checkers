@@ -220,17 +220,22 @@ class Moves {
 
 		let options = [];
 		let mustHit = false;
+		let longest = 0;
 
 		if (hits.length <= 0) {
 			let moves = this._getPieceMoves(x, y);
+			if (moves || moves.length > 0) longest = 1;
 			options.push(...moves.map(move => {
 				return [{ ...move, captured: null }];
 			}));
 		} else {
 			mustHit = true;
+			longest = hits.reduce((max, val) => {
+				return Math.max(max, val.length);
+			}, 0)
 			options.push(...hits);
 		}
-		return { piece: {x, y}, mustHit, moves: options };
+		return { piece: {x, y}, mustHit, moves: options, longest };
 	}
 
 	_getPieceRecursiveHits(x, y) {
@@ -270,7 +275,7 @@ class Moves {
 	}
 
 	_createValidMoves() {
-		// TODO: only longest length and mustHits
+		// TODO: only longest length
 		let moves = [];
 		let mustHit = false;
 
@@ -278,15 +283,15 @@ class Moves {
 			for (let x = 0; x < this.size; x++) {
 				if (this._isPieceFromPlayer(x, y)) {
 					let pieceOptions = this._getPieceOptions(x, y);
-
-					if (pieceOptions.moves.length > 0) {
-						// if (mustHit && !pieceOptions.mustHit) continue;
-						// else if (!mustHit && pieceOptions.mustHit) mustHit = true;
-						moves.push(pieceOptions);
-					}					
+					moves.push(pieceOptions);
+					if (pieceOptions.mustHit && !mustHit) {
+						mustHit = true;
+					}	
 				}
 			}
 		}
+
+		// TODO: filter the first few moves for mustHits
 
 		this.validMoves = moves;
 		
@@ -296,7 +301,8 @@ class Moves {
 
 export default Moves;
 
-let gameState = new GameState({ ...RULES, size: 10 }).createInitial()
+//let gameState = new GameState({ ...RULES, size: 10 }).createInitial();
+let gameState = new GameState({ ...RULES, size: 10 }).addPiece(4, 5, 1).addPiece(3, 4, -1).addPiece(1, 4, -1);
 let arr = gameState.create2dArray();
 let m = new Moves({ size: 10, captureBack: true, flyingKings: true });
 m.findValidMoves(arr, PLAYER_WHITE); /*?*/
