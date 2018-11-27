@@ -43,6 +43,8 @@ export default class Moves {
 	isValidMove(x0, y0, x1, y1) {
 		let pieceMove = this.movesForPiece(x0, y0);
 
+		console.log({x0, y0, x1, y1}, pieceMove);
+
 		return !!pieceMove && !!pieceMove.find(move => {
 			return move[0].x === x1 && move[0].y === y1;
 		})

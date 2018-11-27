@@ -29,6 +29,9 @@ export default class Checkers {
 
 	initTurn() {
 		this.moves.findValidMoves(this.gameState.create2dArray(), this.gameState.currentPlayer);
+
+		console.warn({ gameOver: this.gameState.isGameOver() });
+
 		return this;
 	}
 
@@ -45,5 +48,5 @@ export default class Checkers {
 	}
 }
 
-let checkers = new Checkers(RULES).initGame(); //?.
-checkers.gameState.ascii(); //?
+// let checkers = new Checkers(RULES).initGame(); //?.
+// checkers.gameState.ascii(); //?

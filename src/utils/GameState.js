@@ -1,4 +1,4 @@
-import { NO_PIECE, PIECES, PLAYER_BLACK, PLAYER_WHITE, PIECE_KING, PIECE_MAN, GET_PIECE_PLAYER, GET_PIECE_TYPE } from './constants.js';
+import { NO_PIECE, PIECES, PLAYER_BLACK, PLAYER_WHITE, PIECE_KING, PIECE_MAN, GET_PIECE_PLAYER, GET_PIECE_TYPE, TIE } from './constants.js';
 import Piece from './Piece.js';
 
 export default class GameState {
@@ -66,7 +66,11 @@ export default class GameState {
 			this.winner = PLAYER_BLACK;
 		}
 
-		
+		// No captures for more moves than allowed? Draw
+		if (!this.gameOver && this.noCaptureCounter >= this.autoDrawAfterNoCaptures) {
+			this.gameOver = true;
+			this.winner = TIE;
+		}		
 
 		return this.gameOver;
 	}
@@ -108,7 +112,9 @@ export default class GameState {
 		let arr = this.createEmpty2dArray();
 
 		this.pieces.forEach(piece => {
-			arr[piece.y][piece.x] = piece.typeId;
+			if (piece.alive) {
+				arr[piece.y][piece.x] = piece.typeId;
+			}
 		})
 
 		return arr;
@@ -147,12 +153,12 @@ export default class GameState {
 	}
 
 	_capturePiece(x, y) {
-		this._findPiece(x, y).capture();
+		this._findPiece(x, y, true).capture();
 		return this;
 	}
 
 	_revivePiece(x, y) {
-		this._findPiece(x, y).revive();
+		this._findPiece(x, y, false).revive();
 		return this;
 	}
 
@@ -237,12 +243,12 @@ export default class GameState {
 		return this.previousTurn();
 	}
 
-	_findPiece(x, y) {
-		return this.pieces.find(piece => piece.x === x && piece.y === y);
+	_findPiece(x, y, alive = true) {
+		return this.pieces.find(piece => piece.x === x && piece.y === y && piece.alive === alive);
 	}
 
 	_movePiece(x0, y0, x1, y1) {
-		this._findPiece(x0, y0).move(x1, y1);
+		this._findPiece(x0, y0, true).move(x1, y1);
 		return this;
 	}
 }
