@@ -304,5 +304,6 @@ export default Moves;
 //let gameState = new GameState({ ...RULES, size: 10 }).createInitial();
 let gameState = new GameState({ ...RULES, size: 10 }).addPiece(4, 5, 1).addPiece(3, 4, -1).addPiece(1, 4, -1);
 let arr = gameState.create2dArray();
+let ascii = gameState.ascii(); /* ? */
 let m = new Moves({ size: 10, captureBack: true, flyingKings: true });
 m.findValidMoves(arr, PLAYER_WHITE); /*?*/

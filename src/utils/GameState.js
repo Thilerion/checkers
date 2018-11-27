@@ -52,6 +52,33 @@ class GameState {
 		return arr;
 	}
 
+	ascii() {
+		let str = "   ";
+		let board = this.create2dArray();
+		let divider = "-".repeat(this.size * 4 - 1);
+		
+		for (let i = 0; i < this.size; i++) {
+			str += ` ${i}  `;
+		}
+		str += `\n  *${divider}*\n`;
+		for (let y = 0; y < this.size; y++) {
+			str += `${y} |`;
+			for (let x = 0; x < this.size; x++) {
+				if (board[y][x] === PIECES.manBlack) str += " b |";
+				else if (board[y][x] === PIECES.manWhite) str += " w |";
+				else if (board[y][x] === PIECES.kingBlack) str += " B |";
+				else if (board[y][x] === PIECES.kingWhite) str += " W |";
+				else {
+					if ((y + x) % 2 === 0) str += "   |";
+					else str += " . |";
+				}
+			}
+			str += "\n";
+		}
+		str += `  *${divider}*\n`;
+		return str;
+	}
+
 	addPiece(x, y, type) {
 		this.pieces.push(this._createPiece(x, y, type));
 		return this;
