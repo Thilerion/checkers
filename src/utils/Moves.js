@@ -1,5 +1,4 @@
-import { PLAYER_BLACK, PLAYER_WHITE, NO_PIECE, PIECES, RULES } from './constants.js';
-import GameState from './GameState.js';
+import { PLAYER_BLACK, PLAYER_WHITE, NO_PIECE, PIECES } from './constants.js';
 
 export default class Moves {
 	constructor(options) {
@@ -101,8 +100,8 @@ export default class Moves {
 		return this.directions.reduce((valids, dir) => {
 			let forward =
 				(this.player === PLAYER_BLACK && dir.dy > 0) ||
-				(this.player === PLAYER_WHITE && dir.dy < 0) ||
-				(isKing) ? true : false;
+					(this.player === PLAYER_WHITE && dir.dy < 0) ||
+					(isKing) ? true : false;
 			
 			let nextDir = { ...dir };
 			let nextPos = incrementPos(x, y, nextDir.dx, nextDir.dy);
@@ -173,7 +172,7 @@ export default class Moves {
 
 			if (!nextSquareEmpty && !this._isPieceFromPlayer(x1, y1)) {
 				// check next square
-				foundEnemyPiece = {x: x1, y: y1};
+				foundEnemyPiece = { x: x1, y: y1 };
 			} else if (nextSquareEmpty && isKing) {
 				// if not found, and is king, check next squares in diagonal
 				for (let i = 0; i < dir.kingDiagonalDirs.length && foundEnemyPiece == null; i++) {
@@ -246,7 +245,7 @@ export default class Moves {
 				})
 			}
 		}
-		return { piece: {x, y}, mustHit, moves: options, longest };
+		return { piece: { x, y }, mustHit, moves: options, longest };
 	}
 
 	_getPieceRecursiveHits(x, y) {
@@ -297,7 +296,7 @@ export default class Moves {
 					moves.push(pieceOptions);
 					if (pieceOptions.mustHit && !mustHit) {
 						mustHit = true;
-					}	
+					}
 				}
 			}
 		}
@@ -312,10 +311,3 @@ export default class Moves {
 		return this;
 	}
 }
-
-//let gameState = new GameState({ ...RULES, size: 10 }).createInitial();
-// let gameState = new GameState({ ...RULES, size: 10 }).addPiece(4, 5, 1).addPiece(3, 4, -1).addPiece(1, 4, -1).addPiece(5, 4, -1).addPiece(7, 2, -1).addPiece(5, 2, -1).addPiece(1, 6, -1).addPiece(9, 8, 1).addPiece(6, 9, 1);
-// let arr = gameState.create2dArray();
-// let ascii = gameState.ascii(); /* ? */
-// let m = new Moves({ size: 10, captureBack: true, flyingKings: true });
-// m.findValidMoves(arr, PLAYER_WHITE); /*?*/

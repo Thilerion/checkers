@@ -11,7 +11,7 @@ class Checkers {
 		this.flyingKings = options.flyingKings;
 		this.automaticDrawAfterMoves = options.automaticDrawAfterMoves;
 
-		this.validMoves = new Moves(options);
+		this.moves = new Moves(options);
 		this.gameState = new GameState({
 			...options,
 			currentPlayer: this.firstMove
@@ -20,9 +20,9 @@ class Checkers {
 
 	initGame() {
 		this.gameState.createInitial();
-		this.validMoves.findValidMoves(this.gameState.create2dArray(), this.gameState.currentPlayer);
+		this.moves.findValidMoves(this.gameState.create2dArray(), this.gameState.currentPlayer);
 		return this;
 	}
 }
 
-let checkers = new Checkers(RULES).initGame().validMoves; /*?*/
+let checkers = new Checkers(RULES).initGame().moves.validMoves; /*?*/

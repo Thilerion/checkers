@@ -1,4 +1,4 @@
-import { PLAYER_BLACK, PLAYER_WHITE, NO_PIECE, PIECES } from './constants.js';
+import { NO_PIECE, PIECES } from './constants.js';
 
 export default class GameState {
 	constructor(options) {
