@@ -48,6 +48,16 @@ export default class Moves {
 		})
 	}
 
+	getMovePath(x0, y0, x1, y1) {
+		let pieceMove = this.movesForPiece(x0, y0);
+
+		if (!pieceMove) return;
+
+		return pieceMove.find(move => {
+			return move[0].x === x1 && move[0].y === y1;
+		});
+	}
+
 	_isKing(x, y) {
 		return this.board[y][x] === PIECES.kingBlack || this.board[y][x] === PIECES.kingWhite;
 	}

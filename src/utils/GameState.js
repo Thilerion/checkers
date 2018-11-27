@@ -3,7 +3,7 @@ import Piece from './Piece.js';
 
 export default class GameState {
 	constructor(options, moves) {
-		const { size, currentPlayer } = options;
+		const { size, currentPlayer, autoDrawAfterNoCaptures } = options;
 
 		this.size = size;
 		this.pieces = [];
@@ -13,20 +13,62 @@ export default class GameState {
 		this.moveNumber = 0;	
 		
 		this.moves = moves;
+
+		this.autoDrawAfterNoCaptures = autoDrawAfterNoCaptures;
+		this.noCaptureCounter = 0;
+
+		this.gameOver = false;
+		this.winner = null;
 	}
 
 	_hasMoves() {
 		return this.moves.validMoves.length > 0;
 	}
 
-	_piecesLeft() {
-		
+	_playerPiecesLeft(player) {
+		return this.pieces.filter(piece => piece.player === player);
 	}
 
-	gameOver() {
-		// returns true if game has ended because no more moves
+	_piecesLeft() {
+		const blackPieces = this._playerPiecesLeft(PLAYER_BLACK);
+		const blackKings = blackPieces.filter(piece => piece.isKing());
+
+		const whitePieces = this._playerPiecesLeft(PLAYER_WHITE);
+		const whiteKings = blackPieces.filter(piece => piece.isKing());
+
+		return {
+			blackTotal: blackPieces.length,
+			whiteTotal: whitePieces.length,
+			kingBlack: blackKings.length,
+			kingWhite: whiteKings.length,
+			manBlack: blackPieces.length - blackKings.length,
+			manWhite: whitePieces.length - whiteKings.length
+		};
+	}
+
+	isGameOver() {
+		// returns true if game has ended because no more moves,
 		// 		no more pieces, or one of the draw conditions
-		//return !this._hasMoves() || 
+
+		// No more moves? Enemy wins
+		if (!this.gameOver && !this._hasMoves) {
+			this.gameOver = true;
+			this.winner = this.currentPlayer === PLAYER_BLACK ? PLAYER_WHITE : PLAYER_BLACK;
+		}
+
+		// No more pieces? Enemy wins
+		const piecesLeft = this._piecesLeft;
+		if (!this.gameOver && piecesLeft.blackTotal <= 0) {
+			this.gameOver = true;
+			this.winner = PLAYER_WHITE;
+		} else if (!this.gameOver && piecesLeft.whiteTotal <= 0) {
+			this.gameOver = true;
+			this.winner = PLAYER_BLACK;
+		}
+
+		
+
+		return this.gameOver;
 	}
 
 	_createPiece(x, y, typeId) {
@@ -114,6 +156,23 @@ export default class GameState {
 		return this;
 	}
 
+	_increaseNoCaptureCounter() {
+		this.noCaptureCounter++;
+		return this;
+	}
+
+	_resetNoCaptureCounter() {
+		this.noCaptureCounter = 0;
+		return this;
+	}
+
+	_decreaseNoCaptureCounter() {
+		if (this.noCaptureCounter > 0) {
+			this.noCaptureCounter--;
+		}
+		return this;
+	}
+
 	_doMove(x, y, path) {
 		// takes in x & y coords of piece
 		// takes in path, as defined in the Moves.getValidMoves method
@@ -138,6 +197,12 @@ export default class GameState {
 		this._movePiece(x, y, lastPos.x, lastPos.y);
 
 		this.history.push({ piece, moves, captures });
+
+		if (captures.length > 0) {
+			this._resetNoCaptureCounter();
+		} else {
+			this._increaseNoCaptureCounter();
+		}
 
 		return this.nextTurn();
 	}
@@ -164,6 +229,10 @@ export default class GameState {
 		captures.forEach(cap => {
 			this._revivePiece(cap.x, cap.y);
 		})
+
+		if (captures.length > 0) {
+			this._decreaseNoCaptureCounter();
+		}
 
 		return this.previousTurn();
 	}
