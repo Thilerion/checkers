@@ -54,6 +54,11 @@ export const GET_PIECE_TYPE = pieceId => {
 
 export const IS_PIECE_TYPE_KING = type => type > 2;
 
+export const GET_PIECE_STRING = pieceId => {
+	let base = GET_PIECE_PLAYER(pieceId) === PLAYER_BLACK ? "b" : "w";
+	return GET_PIECE_TYPE(pieceId) === PIECE_KING ? base.toUpperCase() : base;
+}
+
 RULES.size = 8;
 
 export { TIE, PLAYER_BLACK, PLAYER_WHITE, RULES, PIECE_KING, PIECE_MAN, PIECES, NO_PIECE, SQUARE_TYPES };

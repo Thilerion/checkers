@@ -1,4 +1,5 @@
 import { NO_PIECE, PIECES, PLAYER_BLACK, PLAYER_WHITE, PIECE_KING, PIECE_MAN, GET_PIECE_PLAYER, GET_PIECE_TYPE } from './constants.js';
+import Piece from './Piece.js';
 
 export default class GameState {
 	constructor(options, moves) {
@@ -19,17 +20,7 @@ export default class GameState {
 	}
 
 	_piecesLeft() {
-		this.pieces.reduce((left, piece) => {
-			
-			return left;
-		}, {
-			[PLAYER_BLACK]: 0,
-			[PLAYER_WHITE]: 0,
-			manBlack: 0,
-			manWhite: 0,
-			kingWhite: 0,
-			kingBlack: 0
-		});
+		
 	}
 
 	gameOver() {
@@ -39,10 +30,11 @@ export default class GameState {
 	}
 
 	_createPiece(x, y, typeId) {
-		let player = GET_PIECE_PLAYER(typeId);
-		let type = GET_PIECE_TYPE(typeId);
+		// let player = GET_PIECE_PLAYER(typeId);
+		// let type = GET_PIECE_TYPE(typeId);
 		
-		return { x, y, typeId, type, alive: true, player };
+		// return { x, y, typeId, type, alive: true, player };
+		return new Piece(x, y, typeId);
 	}
 
 	createInitial() {
@@ -66,8 +58,12 @@ export default class GameState {
 		return this;
 	}
 
+	createEmpty2dArray() {
+		return Array(this.size).fill(null).map(row => Array(this.size).fill(NO_PIECE));
+	}
+
 	create2dArray() {
-		let arr = Array(this.size).fill(null).map(row => Array(this.size).fill(NO_PIECE));
+		let arr = this.createEmpty2dArray();
 
 		this.pieces.forEach(piece => {
 			arr[piece.y][piece.x] = piece.typeId;
@@ -103,8 +99,8 @@ export default class GameState {
 		return str;
 	}
 
-	addPiece(x, y, type) {
-		this.pieces.push(this._createPiece(x, y, type));
+	addPiece(x, y, typeId) {
+		this.pieces.push(this._createPiece(x, y, typeId));
 		return this;
 	}
 
@@ -115,12 +111,12 @@ export default class GameState {
 	}
 
 	_capturePiece(x, y) {
-		this._findPiece(x, y).alive = false;
+		this._findPiece(x, y).capture();
 		return this;
 	}
 
 	_revivePiece(x, y) {
-		this._findPiece(x, y).alive = true;
+		this._findPiece(x, y).revive();
 		return this;
 	}
 
@@ -183,9 +179,7 @@ export default class GameState {
 	}
 
 	_movePiece(x0, y0, x1, y1) {
-		let piece = this._findPiece(x0, y0);
-		piece.x = x1;
-		piece.y = y1;
+		this._findPiece(x0, y0).move(x1, y1);
 		return this;
 	}
 }
