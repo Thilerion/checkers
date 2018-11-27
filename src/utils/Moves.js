@@ -215,7 +215,7 @@ class Moves {
 		}, [])
 	}
 
-	_getPieceOptions(x, y) {
+	_getPieceOptions(x, y, onlyLongest = true) {
 		let hits = this._getPieceRecursiveHits(x, y);
 
 		let options = [];
@@ -233,7 +233,14 @@ class Moves {
 			longest = hits.reduce((max, val) => {
 				return Math.max(max, val.length);
 			}, 0)
-			options.push(...hits);
+			
+			if (!onlyLongest) {
+				options.push(...hits);
+			} else if (onlyLongest) {
+				hits.forEach(h => {
+					if (h.length >= longest) options.push(h);
+				})
+			}
 		}
 		return { piece: {x, y}, mustHit, moves: options, longest };
 	}
@@ -274,15 +281,14 @@ class Moves {
 		return paths;
 	}
 
-	_createValidMoves() {
-		// TODO: only longest length
+	_createValidMoves(onlyLongest = true) {
 		let moves = [];
 		let mustHit = false;
 
 		for (let y = 0; y < this.size; y++) {
 			for (let x = 0; x < this.size; x++) {
 				if (this._isPieceFromPlayer(x, y)) {
-					let pieceOptions = this._getPieceOptions(x, y);
+					let pieceOptions = this._getPieceOptions(x, y, onlyLongest);
 					moves.push(pieceOptions);
 					if (pieceOptions.mustHit && !mustHit) {
 						mustHit = true;
@@ -295,8 +301,6 @@ class Moves {
 		if (mustHit) {
 			moves = moves.filter(val => val.mustHit);
 		}
-
-		// TODO: filter the first few moves for mustHits
 
 		this.validMoves = moves;
 		
