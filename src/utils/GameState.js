@@ -1,4 +1,4 @@
-import { NO_PIECE, PIECES } from './constants.js';
+import { NO_PIECE, PIECES, PLAYER_BLACK, PLAYER_WHITE } from './constants.js';
 
 export default class GameState {
 	constructor(options) {
@@ -111,6 +111,18 @@ export default class GameState {
 
 		this.history.push({ piece, moves, captures });
 
+		return this.nextTurn();
+	}
+
+	nextTurn() {
+		this.moveNumber++;
+		this.currentPlayer = this.currentPlayer === PLAYER_BLACK ? PLAYER_WHITE : PLAYER_BLACK;
+		return this;
+	}
+
+	previousTurn() {
+		this.moveNumber--;
+		this.currentPlayer = this.currentPlayer === PLAYER_BLACK ? PLAYER_WHITE : PLAYER_BLACK;
 		return this;
 	}
 
@@ -125,7 +137,7 @@ export default class GameState {
 			this.addPiece(cap.x, cap.y, cap.type);
 		})
 
-		return this;
+		return this.previousTurn();
 	}
 
 	_findPiece(x, y) {

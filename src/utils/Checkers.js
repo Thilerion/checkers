@@ -2,7 +2,7 @@ import { RULES } from './constants.js';
 import Moves from './Moves.js';
 import GameState from './GameState.js';
 
-class Checkers {
+export default class Checkers {
 	constructor(options = RULES) {
 
 		this.size = options.size;
