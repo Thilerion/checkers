@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import {PIECES, PLAYER_BLACK, PLAYER_WHITE, IS_PIECE_TYPE_KING} from '../utils/constants.js';
+import {PIECES, PLAYER_BLACK, PLAYER_WHITE} from '../utils/constants.js';
 
 export default {
 	props: ['piece'],

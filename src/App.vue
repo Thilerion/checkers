@@ -13,7 +13,7 @@
 
 			<transition-group tag="div" name="move-piece" class="board board-pieces">
 				<PieceComponent
-					v-for="(piece, pieceIndex) in pieces"
+					v-for="piece in pieces"
 					v-if="piece && piece.alive"
 					:key="piece.uid"
 					:piece="piece"
