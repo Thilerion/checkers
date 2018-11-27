@@ -1,4 +1,4 @@
-import { PIECES, PLAYER_BLACK, PLAYER_WHITE, PIECE_KING, PIECE_MAN, GET_PIECE_PLAYER, GET_PIECE_TYPE, IS_PIECE_TYPE_KING, GET_PIECE_STRING } from './constants.js';
+import { PIECES, PLAYER_BLACK, PLAYER_WHITE, PIECE_KING, PIECE_MAN, GET_PIECE_PLAYER, GET_PIECE_TYPE, IS_PIECE_TYPE_KING, GET_PIECE_STRING, GET_PIECE_ID } from './constants.js';
 
 export default class Piece {
 	constructor(x, y, typeId) {
@@ -36,5 +36,13 @@ export default class Piece {
 
 	toString() {
 		return GET_PIECE_STRING(this.typeId);
+	}
+
+	crown() {
+		if (!this.isKing()) {
+			this.typeId = GET_PIECE_ID(PIECE_KING, this.player);
+			this.type = PIECE_KING;
+		}
+		return this;
 	}
 }

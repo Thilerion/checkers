@@ -52,7 +52,7 @@ export const GET_PIECE_TYPE = pieceId => {
 	else return null;
 }
 
-export const IS_PIECE_TYPE_KING = type => type > 2;
+export const IS_PIECE_TYPE_KING = type => type > 1;
 
 export const GET_PIECE_STRING = pieceId => {
 	let base = GET_PIECE_PLAYER(pieceId) === PLAYER_BLACK ? "b" : "w";
