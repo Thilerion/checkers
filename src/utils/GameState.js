@@ -98,6 +98,10 @@ export default class GameState {
 		let captures = [];
 
 		path.forEach(move => {
+			if (move.x == null || move.y == null) {
+				console.error("Can't find move x and y coordinates. Maybe you passed in all paths instead of just one?");
+				return;
+			}
 			moves.push({ x: move.x, y: move.y });
 
 			if (move.captured) {
