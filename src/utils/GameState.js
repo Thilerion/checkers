@@ -18,7 +18,7 @@ export default class GameState {
 	}
 
 	_createPiece(x, y, type) {
-		return { x, y, type };
+		return { x, y, type, alive: true };
 	}
 
 	createInitial() {
@@ -90,6 +90,16 @@ export default class GameState {
 		return this;
 	}
 
+	_capturePiece(x, y) {
+		this._findPiece(x, y).alive = false;
+		return this;
+	}
+
+	_revivePiece(x, y) {
+		this._findPiece(x, y).alive = true;
+		return this;
+	}
+
 	_doMove(x, y, path) {
 		// takes in x & y coords of piece
 		// takes in path, as defined in the Moves.getValidMoves method
@@ -106,7 +116,7 @@ export default class GameState {
 
 			if (move.captured) {
 				captures.push({ ...move.captured });
-				this.removePiece(move.captured.x, move.captured.y);
+				this._capturePiece(move.captured.x, move.captured.y);
 			}
 		})
 
@@ -138,7 +148,7 @@ export default class GameState {
 		this._movePiece(currentPos.x, currentPos.y, x, y);
 
 		captures.forEach(cap => {
-			this.addPiece(cap.x, cap.y, cap.type);
+			this._revivePiece(cap.x, cap.y);
 		})
 
 		return this.previousTurn();
