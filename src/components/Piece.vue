@@ -26,10 +26,12 @@ export default {
 	width: 65%;
 	height: 65%;
 	border-radius: 50%;
-	margin: auto;
-	display: flex;
+	/* margin: auto; */
+	display: inline-flex;
 	justify-content: center;
 	align-items: center;
+	align-self: center;
+	justify-self: center;
 	box-shadow: 1px 1px 4px -2px black;
 	position: relative;
 	z-index: 10;

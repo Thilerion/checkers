@@ -74,6 +74,7 @@ export default {
 	grid-template-rows: repeat(8, 50px);
 	grid-gap: 2px;
 	user-select: none;
+
 }
 
 .board-background {
@@ -82,6 +83,15 @@ export default {
 
 .move-piece-move {
 	transition: transform .3s;
+	/* position: absolute; */
+}
+
+.move-piece-leave-active {
+	transition: transform .5s;
+}
+
+.move-piece-leave-to {
+	transform: scale(0);
 }
 
 .square-coords {
