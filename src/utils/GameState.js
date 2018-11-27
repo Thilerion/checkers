@@ -36,7 +36,7 @@ export default class GameState {
 	}
 
 	_playerPiecesLeft(player) {
-		return this.pieces.filter(piece => piece.player === player);
+		return this.pieces.filter(piece => piece.player === player && piece.alive);
 	}
 
 	_piecesLeft() {
@@ -67,7 +67,7 @@ export default class GameState {
 		}
 
 		// No more pieces? Enemy wins
-		const piecesLeft = this._piecesLeft;
+		const piecesLeft = this._piecesLeft();
 		if (!this.gameOver && piecesLeft.blackTotal <= 0) {
 			this.gameOver = true;
 			this.winner = PLAYER_WHITE;
