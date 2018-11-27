@@ -45,4 +45,12 @@ export default class Piece {
 		}
 		return this;
 	}
+
+	decrown() {
+		if (this.isKing()) {
+			this.typeId = GET_PIECE_ID(PIECE_MAN, this.player);
+			this.type = PIECE_MAN;
+		}
+		return this;
+	}
 }

@@ -86,10 +86,6 @@ export default class GameState {
 	}
 
 	_createPiece(x, y, typeId) {
-		// let player = GET_PIECE_PLAYER(typeId);
-		// let type = GET_PIECE_TYPE(typeId);
-		
-		// return { x, y, typeId, type, alive: true, player };
 		return new Piece(x, y, typeId);
 	}
 
@@ -162,21 +158,79 @@ export default class GameState {
 		return this;
 	}
 
+	_shouldCrown(y) {
+		return (this.currentPlayer === PLAYER_BLACK && y === this.size - 1) ||
+			(this.currentPlayer === PLAYER_WHITE && y === 0);
+	}
+
+	_doMove(x0, y0, path) {
+		const piece = this.pieces.find(piece => piece.x === x0 && piece.y === y0 && piece.alive);
+		
+		let start = { x: x0, y: y0, typeId: piece.typeId };
+		let end = { x: null, y: null, typeId: null };
+		let captures = [];
+		let wasCrowned = false;
+
+		for (let i = 0; i < path.length; i++) {
+			let move = path[i];
+			if (move.captured) {
+				captures.push({ ...move.captured });
+				this._capturePiece(move.captured.x, move.captured.y, move.captured.type);
+			}
+			if (i === path.length - 1) {
+				end.x = move.x;
+				end.y = move.y;
+				if (this._shouldCrown(move.y)) {
+					piece.crown();
+					end.typeId = piece.typeId;
+					wasCrowned = true;
+				} else {
+					end.typeId = start.typeId;
+				}
+			}
+		}
+
+		piece.move(end.x, end.y);
+
+		this.history.push({ start, end, captures, wasCrowned });
+
+		if (captures.length > 0) {
+			this._resetNoCaptureCounter();
+		} else {
+			this._increaseNoCaptureCounter();
+		}
+
+		return this.nextTurn();
+	}
+
+	_undoMove() {
+		const { start, end, captures, wasCrowned } = this.history.pop();
+		const piece = this.pieces.find(piece => {
+			return piece.x === end.x && piece.y === end.y && piece.typeId === end.typeId;
+		});
+
+		piece.move(start.x, start.y);
+		if (wasCrowned) {
+			piece.decrown();
+		}
+
+		if (captures.length > 0) {
+			this._decreaseNoCaptureCounter();
+			captures.forEach(cap => {
+				this.pieces.find(piece => {
+					return piece.x === cap.x && piece.y === cap.y && piece.typeId === cap.type;
+				}).revive();
+			})
+		}
+		return this.previousTurn();
+	}
+
 	_capturePiece(x, y, typeId) {
 		this.pieces.find(piece => {
 			return piece.x === x &&
 				piece.y === y &&
 				piece.typeId === typeId;
 		}).capture();
-		return this;
-	}
-
-	_revivePiece(x, y, typeId) {
-		this.pieces.find(piece => {
-			return piece.x === x &&
-				piece.y === y &&
-				piece.typeId === typeId;
-		}).revive();
 		return this;
 	}
 
@@ -197,40 +251,6 @@ export default class GameState {
 		return this;
 	}
 
-	_doMove(x, y, path) {
-		// takes in x & y coords of piece
-		// takes in path, as defined in the Moves.getValidMoves method
-		const piece = { x, y };
-		let moves = [];
-		let captures = [];
-
-		path.forEach(move => {
-			if (move.x == null || move.y == null) {
-				console.error("Can't find move x and y coordinates. Maybe you passed in all paths instead of just one?");
-				return;
-			}
-			moves.push({ x: move.x, y: move.y });
-
-			if (move.captured) {
-				captures.push({ ...move.captured });
-				this._capturePiece(move.captured.x, move.captured.y, move.captured.type);
-			}
-		})
-
-		const lastPos = moves[moves.length - 1];
-		this._movePiece(x, y, lastPos.x, lastPos.y);
-
-		this.history.push({ piece, moves, captures });
-
-		if (captures.length > 0) {
-			this._resetNoCaptureCounter();
-		} else {
-			this._increaseNoCaptureCounter();
-		}
-
-		return this.nextTurn();
-	}
-
 	nextTurn() {
 		this.moveNumber++;
 		this.currentPlayer = this.currentPlayer === PLAYER_BLACK ? PLAYER_WHITE : PLAYER_BLACK;
@@ -240,33 +260,6 @@ export default class GameState {
 	previousTurn() {
 		this.moveNumber--;
 		this.currentPlayer = this.currentPlayer === PLAYER_BLACK ? PLAYER_WHITE : PLAYER_BLACK;
-		return this;
-	}
-
-	_undoMove() {
-		const { piece, moves, captures } = this.history.pop();
-		const { x, y } = piece;
-
-		const currentPos = moves[moves.length - 1];
-		this._movePiece(currentPos.x, currentPos.y, x, y);
-
-		captures.forEach(cap => {
-			this._revivePiece(cap.x, cap.y, cap.type);
-		})
-
-		if (captures.length > 0) {
-			this._decreaseNoCaptureCounter();
-		}
-
-		return this.previousTurn();
-	}
-
-	_findPiece(x, y, alive = true) {
-		return this.pieces.find(piece => piece.x === x && piece.y === y && piece.alive === alive);
-	}
-
-	_movePiece(x0, y0, x1, y1) {
-		this._findPiece(x0, y0, true).move(x1, y1);
 		return this;
 	}
 }
