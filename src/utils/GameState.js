@@ -1,6 +1,6 @@
 import { PLAYER_BLACK, PLAYER_WHITE, NO_PIECE, PIECES } from './constants.js';
 
-class GameState {
+export default class GameState {
 	constructor(options) {
 		const { size, currentPlayer } = options;
 
@@ -90,5 +90,3 @@ class GameState {
 		return this;
 	}
 }
-
-export default GameState;

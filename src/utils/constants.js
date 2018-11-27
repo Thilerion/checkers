@@ -19,7 +19,7 @@ const RULES = {
 	firstMove: PLAYER_WHITE,
 	captureBack: true,
 	flyingKings: true,
-	automaticDrawAfterMoves: 100
+	automaticDrawAfterMoves: 150
 }
 
 const PIECES = {

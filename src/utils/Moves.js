@@ -1,7 +1,7 @@
 import { PLAYER_BLACK, PLAYER_WHITE, NO_PIECE, PIECES, RULES } from './constants.js';
 import GameState from './GameState.js';
 
-class Moves {
+export default class Moves {
 	constructor(options) {
 		const { size, captureBack, flyingKings } = options;
 
@@ -308,11 +308,9 @@ class Moves {
 	}
 }
 
-export default Moves;
-
 //let gameState = new GameState({ ...RULES, size: 10 }).createInitial();
-let gameState = new GameState({ ...RULES, size: 10 }).addPiece(4, 5, 1).addPiece(3, 4, -1).addPiece(1, 4, -1).addPiece(5, 4, -1).addPiece(7, 2, -1).addPiece(5, 2, -1).addPiece(1, 6, -1).addPiece(9, 8, 1).addPiece(6, 9, 1);
-let arr = gameState.create2dArray();
-let ascii = gameState.ascii(); /* ? */
-let m = new Moves({ size: 10, captureBack: true, flyingKings: true });
-m.findValidMoves(arr, PLAYER_WHITE); /*?*/
+// let gameState = new GameState({ ...RULES, size: 10 }).addPiece(4, 5, 1).addPiece(3, 4, -1).addPiece(1, 4, -1).addPiece(5, 4, -1).addPiece(7, 2, -1).addPiece(5, 2, -1).addPiece(1, 6, -1).addPiece(9, 8, 1).addPiece(6, 9, 1);
+// let arr = gameState.create2dArray();
+// let ascii = gameState.ascii(); /* ? */
+// let m = new Moves({ size: 10, captureBack: true, flyingKings: true });
+// m.findValidMoves(arr, PLAYER_WHITE); /*?*/
