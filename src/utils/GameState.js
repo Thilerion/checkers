@@ -162,13 +162,21 @@ export default class GameState {
 		return this;
 	}
 
-	_capturePiece(x, y) {
-		this._findPiece(x, y, true).capture();
+	_capturePiece(x, y, typeId) {
+		this.pieces.find(piece => {
+			return piece.x === x &&
+				piece.y === y &&
+				piece.typeId === typeId;
+		}).capture();
 		return this;
 	}
 
-	_revivePiece(x, y) {
-		this._findPiece(x, y, false).revive();
+	_revivePiece(x, y, typeId) {
+		this.pieces.find(piece => {
+			return piece.x === x &&
+				piece.y === y &&
+				piece.typeId === typeId;
+		}).revive();
 		return this;
 	}
 
@@ -205,7 +213,7 @@ export default class GameState {
 
 			if (move.captured) {
 				captures.push({ ...move.captured });
-				this._capturePiece(move.captured.x, move.captured.y);
+				this._capturePiece(move.captured.x, move.captured.y, move.captured.type);
 			}
 		})
 
@@ -243,7 +251,7 @@ export default class GameState {
 		this._movePiece(currentPos.x, currentPos.y, x, y);
 
 		captures.forEach(cap => {
-			this._revivePiece(cap.x, cap.y);
+			this._revivePiece(cap.x, cap.y, cap.type);
 		})
 
 		if (captures.length > 0) {
