@@ -1,7 +1,7 @@
-import { NO_PIECE, PIECES, PLAYER_BLACK, PLAYER_WHITE } from './constants.js';
+import { NO_PIECE, PIECES, PLAYER_BLACK, PLAYER_WHITE, PIECE_KING, PIECE_MAN, GET_PIECE_PLAYER, GET_PIECE_TYPE } from './constants.js';
 
 export default class GameState {
-	constructor(options) {
+	constructor(options, moves) {
 		const { size, currentPlayer } = options;
 
 		this.size = size;
@@ -10,15 +10,39 @@ export default class GameState {
 
 		this.currentPlayer = currentPlayer;
 		this.moveNumber = 0;	
-		this.drawCounters = {
-			oneKingTwoPieces: null,
-			oneKingThreePieces: null,
-			noCapturesOnlyKingsMoved: null
-		}
+		
+		this.moves = moves;
 	}
 
-	_createPiece(x, y, type) {
-		return { x, y, type, alive: true };
+	_hasMoves() {
+		return this.moves.validMoves.length > 0;
+	}
+
+	_piecesLeft() {
+		this.pieces.reduce((left, piece) => {
+			
+			return left;
+		}, {
+			[PLAYER_BLACK]: 0,
+			[PLAYER_WHITE]: 0,
+			manBlack: 0,
+			manWhite: 0,
+			kingWhite: 0,
+			kingBlack: 0
+		});
+	}
+
+	gameOver() {
+		// returns true if game has ended because no more moves
+		// 		no more pieces, or one of the draw conditions
+		//return !this._hasMoves() || 
+	}
+
+	_createPiece(x, y, typeId) {
+		let player = GET_PIECE_PLAYER(typeId);
+		let type = GET_PIECE_TYPE(typeId);
+		
+		return { x, y, typeId, type, alive: true, player };
 	}
 
 	createInitial() {
@@ -46,7 +70,7 @@ export default class GameState {
 		let arr = Array(this.size).fill(null).map(row => Array(this.size).fill(NO_PIECE));
 
 		this.pieces.forEach(piece => {
-			arr[piece.y][piece.x] = piece.type;
+			arr[piece.y][piece.x] = piece.typeId;
 		})
 
 		return arr;

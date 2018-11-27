@@ -15,7 +15,7 @@ export default class Checkers {
 		this.gameState = new GameState({
 			...options,
 			currentPlayer: this.firstMove
-		});
+		}, this.moves);
 	}
 
 	initGame() {
