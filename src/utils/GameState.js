@@ -3,13 +3,14 @@ import Piece from './Piece.js';
 
 export default class GameState {
 	constructor(options, moves) {
-		const { size, currentPlayer, autoDrawAfterNoCaptures } = options;
+		const { size, startingPlayer, autoDrawAfterNoCaptures } = options;
 
 		this.size = size;
 		this.pieces = [];
 		this.history = [];
 
-		this.currentPlayer = currentPlayer;
+		this.startingPlayer = startingPlayer;
+		this.currentPlayer = startingPlayer;
 		this.moveNumber = 0;	
 		
 		this.moves = moves;
@@ -19,6 +20,15 @@ export default class GameState {
 
 		this.gameOver = false;
 		this.winner = null;
+	}
+
+	_importBoard(pieces) {
+		this.pieces = pieces.map(([x, y, typeId]) => {
+			console.log(x, y, typeId);
+			return new Piece(x, y, typeId);
+		});
+				
+		return this;
 	}
 
 	_hasMoves() {

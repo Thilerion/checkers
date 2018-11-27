@@ -15,7 +15,7 @@ export default class Checkers {
 		this.gameState = new GameState(
 			{
 				...options,
-				currentPlayer: this.firstMove,
+				startingPlayer: this.firstMove,
 				autoDrawAfterNoCaptures: this.autoDrawAfterNoCaptures
 			},
 			this.moves
@@ -44,6 +44,24 @@ export default class Checkers {
 		let path = this.moves.getMovePath(x0, y0, x1, y1);
 		this.gameState._doMove(x0, y0, path);
 
+		return this.initTurn();
+	}
+
+	unmakeMove() {
+		this.gameState._undoMove();
+
+		return this.initTurn();
+	}
+
+	importGame(pieces, startingPlayer) {
+		this.gameState = new GameState(
+			{
+				size: this.size,
+				startingPlayer,
+				autoDrawAfterNoCaptures: this.autoDrawAfterNoCaptures
+			},
+			this.moves
+		)._importBoard(pieces);
 		return this.initTurn();
 	}
 }
