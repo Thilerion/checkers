@@ -73,30 +73,24 @@ export default class GameState {
 	}
 
 	ascii() {
-		let str = "   ";
-		let board = this.create2dArray();
-		let divider = "-".repeat(this.size * 4 - 1);
-		
-		for (let i = 0; i < this.size; i++) {
-			str += ` ${i}  `;
-		}
-		str += `\n  *${divider}*\n`;
-		for (let y = 0; y < this.size; y++) {
-			str += `${y} |`;
-			for (let x = 0; x < this.size; x++) {
-				if (board[y][x] === PIECES.manBlack) str += " b |";
-				else if (board[y][x] === PIECES.manWhite) str += " w |";
-				else if (board[y][x] === PIECES.kingBlack) str += " B |";
-				else if (board[y][x] === PIECES.kingWhite) str += " W |";
-				else {
-					if ((y + x) % 2 === 0) str += "   |";
-					else str += " . |";
-				}
-			}
-			str += "\n";
-		}
-		str += `  *${divider}*\n`;
-		return str;
+		let divider = `  *${"-".repeat(this.size * 4 - 1)}*`;
+
+		let board = this.createEmpty2dArray().map((row, y) => {
+			return row.map((cell, x) => (x + y) % 2 === 0 ? "   |" : " . |");
+		});
+
+		this.pieces.forEach(piece => {
+			board[piece.y][piece.x] = ` ${piece.toString()} |`;
+		})
+
+		return [
+			`  ${Array(this.size).fill("").map((val, x) => ` ${x}  `).join('')}`,
+			divider,
+			...board.map((row, y) => {
+				return `${y} |${row.join('')}`;
+			}),
+			divider
+		].join('\n');
 	}
 
 	addPiece(x, y, typeId) {
