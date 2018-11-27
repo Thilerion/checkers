@@ -224,10 +224,14 @@ export default class Moves {
 
 		if (hits.length <= 0) {
 			let moves = this._getPieceMoves(x, y);
-			if (moves || moves.length > 0) longest = 1;
-			options.push(...moves.map(move => {
-				return [{ ...move, captured: null }];
-			}));
+			if (moves && moves.length > 0) {
+				longest = 1;
+				options.push(...moves.map(move => {
+					return [{ ...move, captured: null }];
+				}));
+			} else {
+				return;
+			}
 		} else {
 			mustHit = true;
 			longest = hits.reduce((max, val) => {
@@ -289,6 +293,7 @@ export default class Moves {
 			for (let x = 0; x < this.size; x++) {
 				if (this._isPieceFromPlayer(x, y)) {
 					let pieceOptions = this._getPieceOptions(x, y, onlyLongest);
+					if (!pieceOptions) continue;
 					moves.push(pieceOptions);
 					if (pieceOptions.mustHit && !mustHit) {
 						mustHit = true;
