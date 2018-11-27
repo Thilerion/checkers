@@ -229,7 +229,8 @@ export default class GameState {
 		this.pieces.find(piece => {
 			return piece.x === x &&
 				piece.y === y &&
-				piece.typeId === typeId;
+				piece.typeId === typeId &&
+				piece.alive;
 		}).capture();
 		return this;
 	}
