@@ -20,9 +20,14 @@ class Checkers {
 
 	initGame() {
 		this.gameState.createInitial();
+		return this.initTurn();
+	}
+
+	initTurn() {
 		this.moves.findValidMoves(this.gameState.create2dArray(), this.gameState.currentPlayer);
 		return this;
 	}
 }
 
-let checkers = new Checkers(RULES).initGame().moves.validMoves; /*?*/
+let checkers = new Checkers(RULES).initGame(); //?.
+checkers.gameState.ascii(); //?

@@ -31,6 +31,23 @@ export default class Moves {
 		return this.validMoves;
 	}
 
+	// Returns array of paths the piece can take, if any
+	movesForPiece(x, y) {
+		let pieceMoves = this.validMoves.find(pieces => {
+			return pieces.piece.x === x && pieces.piece.y === y;
+		});
+		return pieceMoves && pieceMoves.moves;
+	}
+
+	// Returns if the chosen move is in the validMoves array
+	isValidMove(x0, y0, x1, y1) {
+		let pieceMove = this.movesForPiece(x0, y0);
+
+		return !!pieceMove && !!pieceMove.find(move => {
+			return move[0].x === x1 && move[0].y === y1;
+		})
+	}
+
 	_isKing(x, y) {
 		return this.board[y][x] === PIECES.kingBlack || this.board[y][x] === PIECES.kingWhite;
 	}

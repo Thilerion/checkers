@@ -89,4 +89,53 @@ export default class GameState {
 		this.pieces.splice(index, 1);
 		return this;
 	}
+
+	_doMove(x, y, path) {
+		// takes in x & y coords of piece
+		// takes in path, as defined in the Moves.getValidMoves method
+		const piece = { x, y };
+		let moves = [];
+		let captures = [];
+
+		path.forEach(move => {
+			moves.push({ x: move.x, y: move.y });
+
+			if (move.captured) {
+				captures.push({ ...move.captured });
+				this.removePiece(move.captured.x, move.captured.y);
+			}
+		})
+
+		const lastPos = moves[moves.length - 1];
+		this._movePiece(x, y, lastPos.x, lastPos.y);
+
+		this.history.push({ piece, moves, captures });
+
+		return this;
+	}
+
+	_undoMove() {
+		const { piece, moves, captures } = this.history.pop();
+		const { x, y } = piece;
+
+		const currentPos = moves[moves.length - 1];
+		this._movePiece(currentPos.x, currentPos.y, x, y);
+
+		captures.forEach(cap => {
+			this.addPiece(cap.x, cap.y, cap.type);
+		})
+
+		return this;
+	}
+
+	_findPiece(x, y) {
+		return this.pieces.find(piece => piece.x === x && piece.y === y);
+	}
+
+	_movePiece(x0, y0, x1, y1) {
+		let piece = this._findPiece(x0, y0);
+		piece.x = x1;
+		piece.y = y1;
+		return this;
+	}
 }
