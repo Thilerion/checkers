@@ -46,7 +46,7 @@ export default class Moves {
 		console.log({x0, y0, x1, y1}, pieceMove);
 
 		return !!pieceMove && !!pieceMove.find(move => {
-			return move[0].x === x1 && move[0].y === y1;
+			return move[move.length - 1].x === x1 && move[move.length - 1].y === y1;
 		})
 	}
 
@@ -56,7 +56,7 @@ export default class Moves {
 		if (!pieceMove) return;
 
 		return pieceMove.find(move => {
-			return move[0].x === x1 && move[0].y === y1;
+			return move[move.length - 1].x === x1 && move[move.length - 1].y === y1;
 		});
 	}
 
