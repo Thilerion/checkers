@@ -11,13 +11,13 @@ export default {
 	props: ['piece'],
 	computed: {
 		pieceColor() {
-			if (this.piece.playerId === PLAYER_BLACK) {
+			if (this.piece.type < 0) {
 				return 'black';
-			} else if (this.piece.playerId === PLAYER_WHITE) return 'white';
+			} else if (this.piece.type > 0) return 'white';
 		},
 
 		isKing() {
-			return this.piece.isKing();
+			return Math.abs(this.piece.type) > 1;
 		}
 	}
 }

@@ -6,10 +6,6 @@
 					v-for="(square, sqIndex) in grid"
 					:key="sqIndex"
 					:square="square"
-					:selected="!!selected && selected.x === square.x && selected.y === square.y"
-					:canBeHit="availableHits.find(h => h.x === square.x && h.y === square.y)"
-					:canBeMovedTo="availableSquaresForMove.find(h => h.x === square.x && h.y === square.y)"
-					@click.native="select(square.x, square.y)"
 				>
 					<span class="square-coords">{{square.x}},{{square.y}}</span>
 				</SquareComponent>
@@ -17,12 +13,10 @@
 
 			<transition-group tag="div" name="move-piece" class="board board-pieces">
 				<PieceComponent
-					v-for="piece in pieces"
-					:key="`${piece.id},isAlive:${piece.alive}`"
+					v-for="(piece, pieceIndex) in pieces"
+					:key="pieceIndex"
 					:piece="piece"
 					:style="getPiecePosition(piece)"
-					@click.native="select(piece.x, piece.y)"
-					v-if="piece.alive"
 				/>
 			</transition-group>
 			
@@ -51,7 +45,7 @@
 				</SquareComponent>
 			</div>
 		</div> -->
-		<div class="gameState">
+		<!-- <div class="gameState">
 			<div v-if="!winner" class="playing">
 				<p>Current player: {{currentPlayer}}</p>
 				<p>Zet {{game.moveNumber + 1}}</p>
@@ -62,13 +56,14 @@
 			<div v-else class="game-end">
 				<p>{{winner}} player has won!</p>
 			</div>
-		</div>
+		</div> -->
 	</div>
 </template>
 
 <script>
 import Checkers from './utils/Checkers.js';
-import {PIECES, SQUARE_TYPES, PLAYER_WHITE, PLAYER_BLACK} from './utils/constants.js';
+import {Grid} from './utils/grid-ui.js';
+import {PIECES, SQUARE_TYPES, PLAYER_WHITE, PLAYER_BLACK, RULES} from './utils/constants.js';
 
 import SquareComponent from './components/Square.vue';
 import PieceComponent from './components/Piece.vue';
@@ -81,62 +76,36 @@ export default {
 	},
 	data() {
 		return {
-			game: new Checkers()
+			game: new Checkers().initGame(),
+			gridComp: new Grid(RULES.size)
 		}
 	},
 	computed: {
-		board() {
-			return this.game.gameBoard.board.flat();
-		},
-		grid() {
-			return this.game.checkerBoard.grid.flat();
-		},
 		size() {
 			return this.game.size;
 		},
 		pieces() {
-			return this.game.checkerBoard.pieces;
+			return this.game.gameState.pieces;
 		},
-		selected() {
-			return this.game.selected;
-		},
-		pathsForSelection() {
-			if (!this.selected) return [];
-			return this.game.getPathsForPiece(this.selected.x, this.selected.y);
-		},
-		availableSquaresForMove() {
-			return this.pathsForSelection.reduce((squares, path) => {
-				squares.push(...path);
-				return squares;
-			}, []);
-		},
-		availableHits() {
-			return this.availableSquaresForMove.reduce((hits, square) => {
-				if (square.captured) {
-					hits.push(square.captured);
-				}
-				return hits;
-			}, []);
+		grid() {
+			return this.gridComp.grid.flat();
 		},
 		whitePiecesLeft() {
-			return this.game.gameBoard.piecesLeft[PLAYER_WHITE];
+			//return this.game.gameBoard.piecesLeft[PLAYER_WHITE];
 		},
 		blackPiecesLeft() {
-			return this.game.gameBoard.piecesLeft[PLAYER_BLACK];
+			//return this.game.gameBoard.piecesLeft[PLAYER_BLACK];
 		},
 		currentPlayer() {
-			return this.game.currentPlayer === PLAYER_BLACK ? "Black" : "White";
+			//return this.game.currentPlayer === PLAYER_BLACK ? "Black" : "White";
 		},
 		winner() {
-			if (!this.game.gameEnd) return;
+			//if (!this.game.gameEnd) return;
 
-			return `${this.game.winner.charAt(0).toUpperCase()}${this.game.winner.slice(1)}`;
+			//return `${this.game.winner.charAt(0).toUpperCase()}${this.game.winner.slice(1)}`;
 		}
 	},
 	methods: {
-		select(x, y) {
-			this.game.select(x, y);
-		},
 		getPiecePosition(piece) {
 			return {
 				'grid-column': `${piece.x + 1} / span 1`,
@@ -145,8 +114,7 @@ export default {
 		}
 	},
 	mounted() {
-		this.game.gameBoard.createBoard().setPiece(0, 7, 2).setPiece(1, 0, -2).setPiece(3, 0, -1).setPiece(1, 6, -1).setPiece(2, 7, 1);
-		this.game.initializeTurn().regenerateGrid();
+		
 	}
 };
 </script>
