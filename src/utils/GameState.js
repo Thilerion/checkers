@@ -163,38 +163,72 @@ export default class GameState {
 			(this.currentPlayer === PLAYER_WHITE && y === 0);
 	}
 
-	_doMove(x0, y0, path) {
-		const piece = this.pieces.find(piece => piece.x === x0 && piece.y === y0 && piece.alive);
-		
-		let start = { x: x0, y: y0, typeId: piece.typeId };
-		let end = { x: null, y: null, typeId: null };
-		let captures = [];
+	_recordHistory(uid, start, moves, capturedPieces, wasCrowned) {
+		const historyItem = {
+			start,
+			wasCrowned,
+			uid,
+			end: moves[moves.length - 1],
+			captures: capturedPieces.map(capturedPiece => {
+				console.log(capturedPiece);
+				const {x, y, typeId, uid} = capturedPiece;
+				return {x, y, typeId, uid};
+			})
+		};
+
+		this.history.push(historyItem);
+	}
+
+	_findPiece(props) {
+		return this.pieces.find(piece => {
+			for (let prop in props) {
+				let val = props[prop];
+				if (piece[prop] !== val) return false;
+			}
+			return true;
+		})
+	}
+
+	_processMove(x0, y0, path) {
+		const piece = this._findPiece({x: x0, y: y0, alive: true});
+		const start = {x: x0, y: y0, typeId: piece.typeId};
+		const moves = [];
+		const capturedPieces = [];
 		let wasCrowned = false;
-
-		for (let i = 0; i < path.length; i++) {
-			let move = path[i];
+		
+		path.forEach((move, i) => {
 			if (move.captured) {
-				captures.push({ ...move.captured });
-				this._capturePiece(move.captured.x, move.captured.y, move.captured.type);
+				let capturedPiece = this._findPiece({x: move.captured.x, y: move.captured.y, typeId: move.captured.type});
+				capturedPieces.push(capturedPiece);
 			}
-			if (i === path.length - 1) {
-				end.x = move.x;
-				end.y = move.y;
-				if (this._shouldCrown(move.y)) {
-					piece.crown();
-					end.typeId = piece.typeId;
-					wasCrowned = true;
-				} else {
-					end.typeId = start.typeId;
-				}
+			moves.push({
+				x: move.x,
+				y: move.y
+			});
+			if (i === path.length - 1 && !piece.isKing() && this._shouldCrown(move.y)) {
+				wasCrowned = true;
 			}
-		}
+		})
+		return {piece, start, moves, capturedPieces, wasCrowned};
+	}
 
+	_doMove(x0, y0, path) {
+		const {piece, start, moves, wasCrowned, capturedPieces} = this._processMove(x0, y0, path);
+
+		const end = moves[moves.length - 1];
 		piece.move(end.x, end.y);
 
-		this.history.push({ start, end, captures, wasCrowned });
+		if (wasCrowned) {
+			piece.crown();
+		}
 
-		if (captures.length > 0) {
+		capturedPieces.forEach(captured => {
+			captured.capture();
+		})
+
+		this._recordHistory(piece.uid, start, moves, capturedPieces, wasCrowned);
+
+		if (capturedPieces.length > 0) {
 			this._resetNoCaptureCounter();
 		} else {
 			this._increaseNoCaptureCounter();
@@ -223,16 +257,6 @@ export default class GameState {
 			})
 		}
 		return this.previousTurn();
-	}
-
-	_capturePiece(x, y, typeId) {
-		this.pieces.find(piece => {
-			return piece.x === x &&
-				piece.y === y &&
-				piece.typeId === typeId &&
-				piece.alive;
-		}).capture();
-		return this;
 	}
 
 	_increaseNoCaptureCounter() {
