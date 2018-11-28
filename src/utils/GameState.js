@@ -238,23 +238,22 @@ export default class GameState {
 	}
 
 	_undoMove() {
-		const { start, end, captures, wasCrowned } = this.history.pop();
-		const piece = this.pieces.find(piece => {
-			return piece.x === end.x && piece.y === end.y && piece.typeId === end.typeId;
-		});
+		const { start, end, captures, uid, wasCrowned } = this.history.pop();
+
+		const piece = this._findPiece({uid});
 
 		piece.move(start.x, start.y);
+
 		if (wasCrowned) {
 			piece.decrown();
 		}
 
+		captures.forEach(capturedPiece => {
+			this._findPiece(capturedPiece).revive();
+		})
+
 		if (captures.length > 0) {
 			this._decreaseNoCaptureCounter();
-			captures.forEach(cap => {
-				this.pieces.find(piece => {
-					return piece.x === cap.x && piece.y === cap.y && piece.typeId === cap.type;
-				}).revive();
-			})
 		}
 		return this.previousTurn();
 	}
