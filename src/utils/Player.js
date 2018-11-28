@@ -29,6 +29,8 @@ export class RandomAI extends PlayerInterface {
 	}
 
 	makeMove() {
+		console.log("Now requesting RandomAI to make a move.");
+
 		if (this.validMoves.length <= 0) return;
 
 		const validMovePaths = this.findValidMovePaths();
@@ -44,5 +46,9 @@ export class RandomAI extends PlayerInterface {
 export class HumanPlayer extends PlayerInterface {
 	constructor(color, sendMove) {
 		super(color, true, sendMove);
+	}
+
+	makeMove() {
+		console.log("Now requesting HumanPlayer to make a move.");
 	}
 }
