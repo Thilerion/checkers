@@ -36,8 +36,15 @@ export default class Moves {
 		let pieceMoves = this.validMoves.find(pieces => {
 			return pieces.piece.x === x && pieces.piece.y === y;
 		});
-		return pieceMoves && pieceMoves.moves;
+		if (!pieceMoves) return [];
+		return pieceMoves.moves;
 	}
+
+	getAmountMoveablePieces() {
+		return this.validMoves.length;
+	}
+
+	
 
 	// Returns if the chosen move is in the validMoves array
 	isValidMove(x0, y0, x1, y1) {
