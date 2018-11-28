@@ -41,7 +41,11 @@ export default {
 	},
 	data() {
 		return {
-			game: new Checkers().initGame(),
+			game: new Checkers().importGame([
+				[2, 5, 2],
+				[4, 3, -1],
+				[5, 2, -1]
+			], 'white'),
 			gridComp: new Grid(RULES.size)
 		}
 	},

@@ -194,6 +194,7 @@ export default class Moves {
 			// add next position, or all next positions if king, to hits array, along with coords of captured piece
 			let x1 = dir.dx + x;
 			let y1 = dir.dy + y;
+			// debugger;
 			let nextSquareEmpty = this._isEmptySquare(x1, y1);
 
 			let foundEnemyPiece;
@@ -203,12 +204,14 @@ export default class Moves {
 				// check next square
 				foundEnemyPiece = { x: x1, y: y1 };
 			} else if (nextSquareEmpty && isKing) {
-				// if not found, and is king, check next squares in diagonal
-				for (let i = 0; i < dir.kingDiagonalDirs.length && foundEnemyPiece == null; i++) {
+				// if not found, and is king, check next squares in diagonal for enemy piece
+				for (let i = 0; i < dir.kingDiagonalDirs.length - 1 && foundEnemyPiece == null; i++) {
 					x1 = dir.kingDiagonalDirs[i].dx + x;
 					y1 = dir.kingDiagonalDirs[i].dy + y;
 					nextSquareEmpty = this._isEmptySquare(x1, y1);
 					if (!nextSquareEmpty && !this._isPieceFromPlayer(x1, y1)) {
+						// if an enemy piece is found, this might be
+						// a valid hit (IF EMPTY CELL AFTER TODO:)
 						foundEnemyPiece = { x: x1, y: y1 };
 						foundEnemyPieceDirIndex = i;
 					}
@@ -225,7 +228,7 @@ export default class Moves {
 				hits.push({ x: x2, y: y2, captured: { x: foundEnemyPiece.x, y: foundEnemyPiece.y } });
 			}
 
-			if (isKing) {
+			if (this._isValidSquare(x2, y2) && this._isEmptySquare(x2, y2) && isKing) {
 				// if king, check where in the kingDiagonalDirs we left off, and resume from there
 				// to check for more empty cells that can be added as hit option
 				let startIndex = foundEnemyPieceDirIndex != null ? foundEnemyPieceDirIndex + 2 : 1;

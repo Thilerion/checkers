@@ -4,7 +4,7 @@ import GameState from './GameState.js';
 import { HumanPlayer, RandomAI } from './Player.js';
 
 export default class Checkers {
-	constructor(options = RULES, WhiteClass = RandomAI, BlackClass = RandomAI) {
+	constructor(options = RULES, WhiteClass = HumanPlayer, BlackClass = HumanPlayer) {
 
 		this.size = options.size;
 		this.firstMove = options.firstMove;
