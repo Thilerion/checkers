@@ -60,6 +60,17 @@ class MovePath {
 	startingPieceTypeId() {
 		return this.moves[0].typeId;
 	}
+
+	getDestination() {
+		return { ...this.moves[this.moves.length - 1].to };
+	}
+
+	getCaptures() {
+		return this.moves.reduce((caps, move) => {
+			if (move.captured != null) caps.push({ ...move.captured });
+			return caps;
+		}, []);
+	}
 }
 
 class ValidMoves {
@@ -103,12 +114,16 @@ class ValidMoves {
 		return this.paths.some(path => path.mustCapture());
 	}
 
-	isValidInitialMove() {
-
-	}
-
-	isValidFullMove() {
-
+	getMoveablePieceLocations() {
+		const index = [];
+		return this.paths.map(path => {
+			return path.startingPieceLocation();
+		}).filter(piece => {
+			const key = `x${piece.x}y${piece.y}`;
+			if (index.includes(key)) return false;
+			index.push(key);
+			return true;
+		})
 	}
 }
 
