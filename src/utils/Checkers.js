@@ -13,9 +13,6 @@ export default class Checkers {
 		this.flyingKings = options.flyingKings;
 		this.autoDrawAfterNoCaptures = options.autoDrawAfterNoCaptures;
 
-		this.playerWhite = new WhiteClass(PLAYER_WHITE, this.makeSingleMove.bind(this));
-		this.playerBlack = new BlackClass(PLAYER_BLACK, this.makeSingleMove.bind(this));
-
 		this.moves = new Moves(options);
 		this.gameState = new GameState(
 			{
@@ -25,6 +22,9 @@ export default class Checkers {
 			},
 			this.moves
 		);
+
+		this.playerWhite = new WhiteClass(PLAYER_WHITE, this.moves, this.makeSingleMove.bind(this));
+		this.playerBlack = new BlackClass(PLAYER_BLACK, this.moves, this.makeSingleMove.bind(this));
 	}
 
 	initGame() {
@@ -53,7 +53,6 @@ export default class Checkers {
 
 	requestAiMove() {
 		let player = this.currentPlayerClass();
-		player.setValidMoves(this.moves.validMoves);
 
 		player.makeMove();
 		return this;
