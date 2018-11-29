@@ -12,7 +12,7 @@ export class RandomAI extends PlayerInterface {
 		super(color, false, sendMove, moves);
 	}
 
-	makeMove(doEntirePath = false) {
+	makeMove() {
 		console.log("Now requesting RandomAI to make a move.");
 
 		if (!this.moves.validMoves.hasMoves()) return;
@@ -21,22 +21,6 @@ export class RandomAI extends PlayerInterface {
 		const path = paths[Math.floor(Math.random() * paths.length)];
 
 		this.sendMove(path.getNextMove());
-
-		if (doEntirePath && path.amount() > 0) {
-			this.makeTimedMoves(path);
-		}
-	}
-
-	makeTimedMoves() {
-		setTimeout(() => {
-			debugger;
-			const paths = this.moves.validMoves.paths;
-			const newPath = paths[Math.floor(Math.random() * paths.length)];
-			const nextMove = newPath.getNextMove();
-			console.log(nextMove);
-			this.sendMove(nextMove);
-			this.makeTimedMoves();
-		}, 1000);
 	}
 }
 

@@ -310,7 +310,6 @@ export default class Moves {
 		} else {
 			mustHit = true;
 			longest = piecePaths.reduce((max, val) => {
-				console.log(val.amount());
 				return Math.max(max, val.amount());
 			}, 0)
 			
