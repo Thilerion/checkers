@@ -213,6 +213,10 @@ export default class GameState {
 	}
 
 	_doMove(x0, y0, path) {
+		if (this.gameOver) {
+			console.error("Can't make a move when the game is over!");
+		}
+		
 		const {piece, start, moves, wasCrowned, capturedPieces} = this._processMove(x0, y0, path);
 
 		const end = moves[moves.length - 1];
