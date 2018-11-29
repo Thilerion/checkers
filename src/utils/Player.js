@@ -7,19 +7,8 @@ class PlayerInterface {
 	}
 
 	setValidMoves(validMoves) {
-		this.validMoves = JSON.parse(JSON.stringify(validMoves));
+		this.validMoves = validMoves;
 		return this;
-	}
-
-	findValidMovePaths() {
-		let paths = [];
-
-		this.validMoves.forEach(piecePaths => {
-			piecePaths.moves.forEach(path => {
-				paths.push({ from: piecePaths.piece, moves: path });
-			})
-		})
-		return paths;
 	}
 }
 
@@ -33,11 +22,11 @@ export class RandomAI extends PlayerInterface {
 
 		if (this.validMoves.length <= 0) return;
 
-		const validMovePaths = this.findValidMovePaths();
+		const validMovePaths = this.validMoves.paths;
 		const path = validMovePaths[Math.floor(Math.random() * validMovePaths.length)];
 
-		const from = path.from;
-		const to = path.moves[path.moves.length - 1];
+		const from = path.startingPieceLocation();
+		const to = path.getDestination();
 
 		this.sendMove(from.x, from.y, to.x, to.y);
 	}
