@@ -2,6 +2,7 @@ import { RULES, PLAYER_BLACK, PLAYER_WHITE } from './constants.js';
 import Moves from './Moves.js';
 import GameState from './GameState.js';
 import { HumanPlayer, RandomAI } from './Player.js';
+import { MovePath, Move } from './MoveClasses.js';
 
 export default class Checkers {
 	constructor(options = RULES, WhiteClass = HumanPlayer, BlackClass = HumanPlayer) {
@@ -56,6 +57,52 @@ export default class Checkers {
 
 		player.makeMove();
 		return this;
+	}
+
+	_validatePath(path) {
+		if (!(path instanceof MovePath)) {
+			throw new Error("This is not a valid MovePath object!");
+		}
+		return this.moves.validMoves.isPathCurrentlyValid(path);
+	}
+
+	_validateMove(move) {
+		if (!(move instanceof Move)) {
+			throw new Error("This is not a valid move object!");
+		}
+		return this.moves.validMoves.isMoveCurrentlyValid(move);
+	}
+
+	makeMoveWithPath(path) {
+		if (!this._validatePath(path)) {
+			console.warn("Not a valid path!");
+			return;
+		}
+		
+		// Do entire move in one go. Might be useful?
+
+		// gameState.doMovesInPath()
+		// return this.initTurn()
+	}
+
+	makeSingleMove(move) {
+		if (!this._validateMove(move)) {
+			console.warn("Not a valid move!");
+			return;
+		}
+
+		// Do single move from path
+		// Check if was last move, else reduce all paths in ValidPaths with the last made move
+		// if was last move, do this.initTurn()
+
+		// gameState.doMove()
+		let isFinished = this.moves.validMoves.reducePathsWithMove(move).finished;
+		if (isFinished) {
+			return this.initTurn();
+		} else {
+			console.log("There are still moves that can be made.");
+			return this;
+		}
 	}
 
 	makeMove(x0, y0, x1, y1) {

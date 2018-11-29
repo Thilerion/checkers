@@ -41,6 +41,7 @@ export class Move {
 
 export class MovePath {
 	constructor(moves) {
+		this.executedMoves = [];
 		this.moves = [...moves];
 	}
 
@@ -82,6 +83,14 @@ export class MovePath {
 		}
 	}
 
+	getNextMove() {
+		if (this.moves.length > 0) {
+			return this.moves[0];
+		} else {
+			throw new Error("Can't return next move when there is none!");
+		}
+	}
+
 	locationIsNextLocation(x, y) {
 		const next = this.nextSquare();
 		return next.x === x && next.y === y;
@@ -92,6 +101,12 @@ export class MovePath {
 			if (move.captured != null) caps.push({ ...move.captured });
 			return caps;
 		}, []);
+	}
+
+	moveWasMade() {
+		let move = this.moves.shift();
+		this.executedMoves.push(move);
+		return;
 	}
 }
 
@@ -137,6 +152,19 @@ export class ValidMoves {
 		})
 	}
 
+	getPathsWithMove(move) {
+		return this.paths.filter(movePath => movePath.getNextMove() === move);
+	}
+
+	// used to check if a path that was chosen by AI or something is still up-to-date
+	isPathCurrentlyValid(path) {
+		return this.paths.some(validPath => validPath === path);
+	}
+
+	isMoveCurrentlyValid(move) {
+		return this.paths.some(path => path.getNextMove() === move);
+	}
+
 	playerMustCapture() {
 		return this.paths.some(path => path.mustCapture());
 	}
@@ -151,5 +179,27 @@ export class ValidMoves {
 			index.push(key);
 			return true;
 		})
+	}
+
+	reducePathsWithMove(move) {
+		if (this.getLengthOfPaths() === 1) {
+			const finishedPath = this.getPathsWithMove(move);
+			finishedPath[0].moveWasMade();
+			this.paths = [];
+			return { finished: true, path: finishedPath[0] };
+		}
+
+		const nextPossiblePaths = this.getPathsWithMove(move);
+		
+		nextPossiblePaths.forEach(path => {
+			path.moveWasMade();
+		})
+
+		this.paths = nextPossiblePaths;
+		return { finished: false };
+	}
+
+	getLengthOfPaths() {
+		return this.paths.reduce((max, path) => Math.max(path.amount(), max), 0);
 	}
 }
