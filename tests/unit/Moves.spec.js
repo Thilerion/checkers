@@ -248,4 +248,55 @@ describe('valid moves for board setups', () => {
 			expect(M.isValidCapture(3, 4, 5, 6)).toBe(false);
 		})
 	})
+
+	describe('valid multiple hits for kings', () => {
+		it('returns a simple two-hit capture in the same direction', () => {
+			board = createBoard([
+				[0, 7, 2],
+				[3, 4, -1],
+				[5, 2, -1]
+			]);
+			M.findValidMoves(board, PLAYER_WHITE);
+
+			expect(M.getAmountMoveablePieces()).toBe(1);
+			expect(M.movesForPiece(0, 7)).toHaveLength(2);
+			expect(M.isValidCapture(0, 7, 3, 4)).toBe(true);
+			expect(M.isValidCapture(0, 7, 5, 2)).toBe(true);
+		})
+
+		it('returns a multiple captures in different directions', () => {
+			board = createBoard([
+				[0, 7, 2],
+				[2, 5, -1],
+				[5, 4, -1],
+				[5, 6, -1]
+			]);
+			M.findValidMoves(board, PLAYER_WHITE);
+
+			expect(M.getAmountMoveablePieces()).toBe(1);
+			expect(M.movesForPiece(0, 7)).toHaveLength(1);
+			expect(M.isValidCapture(0, 7, 2, 5)).toBe(true);
+			expect(M.isValidCapture(0, 7, 5, 4)).toBe(true);
+			expect(M.isValidCapture(0, 7, 5, 6)).toBe(true);
+			expect(M.movesForPiece(0, 7)[0]).toHaveLength(3);
+		})
+
+		it('finds capture paths with different landing squares after a hit', () => {
+			board = createBoard([
+				[0, 7, 2],
+				[2, 5, -1],
+				[4, 5, -1],
+				[4, 1, -1]
+			]);
+			M.findValidMoves(board, PLAYER_WHITE);
+
+			expect(M.getAmountMoveablePieces()).toBe(1);
+			expect(M.movesForPiece(0, 7)).toHaveLength(3);
+			expect(M.isValidCapture(0, 7, 2, 5)).toBe(true);
+			expect(M.isValidCapture(0, 7, 4, 5)).toBe(true);
+			expect(M.isValidCapture(0, 7, 4, 1)).toBe(true);
+			expect(M.getPiecePathsWithVisitedSquare(0, 7, 3, 4)).toHaveLength(2);
+			expect(M.getPiecePathsWithVisitedSquare(0, 7, 5, 2)).toHaveLength(1);
+		})
+	})
 })
