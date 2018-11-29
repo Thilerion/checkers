@@ -31,6 +31,31 @@ export default class Moves {
 		return this.validMoves;
 	}
 
+	// Returns the piece, if found, in the validMoves array
+	// Contains {longest, mustHit, piece: {x, y}, and moves: [Array with paths]}
+	getPieceInValidMoves(x, y) {
+		return this.validMoves.find(pieces => {
+			return pieces.piece.x === x && pieces.piece.y === y;
+		}) || [];
+	}
+
+	getPiecePathsWithVisitedSquare(pieceX, pieceY, visitedX, visitedY) {
+		let piecePaths = this.getPieceInValidMoves(pieceX, pieceY).moves;
+
+		return piecePaths.filter(path => {
+			return path.some(move => move.x === visitedX && move.y === visitedY);
+		});
+	}
+
+	isValidCapture(pieceX, pieceY, captureX, captureY) {
+		let piecePaths = this.getPieceInValidMoves(pieceX, pieceY).moves;
+
+		return piecePaths.some(path => {
+			if (!path || !path.length) return false;
+			return path.some(move => move.captured != null && move.captured.x === captureX && move.captured.y === captureY);
+		});
+	}
+
 	// Returns array of paths the piece can take, if any
 	movesForPiece(x, y) {
 		let pieceMoves = this.validMoves.find(pieces => {
@@ -42,9 +67,7 @@ export default class Moves {
 
 	getAmountMoveablePieces() {
 		return this.validMoves.length;
-	}
-
-	
+	}	
 
 	// Returns if the chosen move is in the validMoves array
 	isValidMove(x0, y0, x1, y1) {
@@ -56,8 +79,10 @@ export default class Moves {
 			return move[move.length - 1].x === x1 && move[move.length - 1].y === y1;
 		})
 	}
+	
 
 	getMovePath(x0, y0, x1, y1) {
+		// with final destination
 		let pieceMove = this.movesForPiece(x0, y0);
 
 		if (!pieceMove) return;

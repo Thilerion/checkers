@@ -42,9 +42,9 @@ export default {
 	data() {
 		return {
 			game: new Checkers().importGame([
-				[2, 5, 2],
+				[3, 4, 1],
 				[4, 3, -1],
-				[5, 2, -1]
+				[6, 1, -1]
 			], 'white'),
 			gridComp: new Grid(RULES.size)
 		}
