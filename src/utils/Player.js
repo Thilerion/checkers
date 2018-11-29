@@ -7,7 +7,7 @@ class PlayerInterface {
 	}
 
 	setValidMoves(validMoves) {
-		this.validMoves = validMoves;
+		this.validMoves = JSON.parse(JSON.stringify(validMoves));
 		return this;
 	}
 
@@ -46,9 +46,5 @@ export class RandomAI extends PlayerInterface {
 export class HumanPlayer extends PlayerInterface {
 	constructor(color, sendMove) {
 		super(color, true, sendMove);
-	}
-
-	makeMove() {
-		console.log("Now requesting HumanPlayer to make a move.");
 	}
 }

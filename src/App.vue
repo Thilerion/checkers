@@ -22,6 +22,7 @@
 			</transition-group>
 			
 		</div>
+		<button :disabled="!game.currentPlayerIsAI()" @click="requestAIMove">Request AI Move</button>
 	</div>
 </template>
 
@@ -29,6 +30,7 @@
 import Checkers from './utils/Checkers.js';
 import { Grid } from './utils/grid-ui.js';
 import { PIECES, SQUARE_TYPES, PLAYER_WHITE, PLAYER_BLACK, RULES } from './utils/constants.js';
+import { HumanPlayer, RandomAI } from './utils/Player.js';
 
 import SquareComponent from './components/Square.vue';
 import PieceComponent from './components/Piece.vue';
@@ -41,11 +43,7 @@ export default {
 	},
 	data() {
 		return {
-			game: new Checkers().importGame([
-				[3, 4, 1],
-				[4, 3, -1],
-				[6, 1, -1]
-			], 'white'),
+			game: new Checkers(RULES, RandomAI, RandomAI).initGame(),
 			gridComp: new Grid(RULES.size)
 		}
 	},
@@ -66,6 +64,9 @@ export default {
 				'grid-column': `${piece.x + 1} / span 1`,
 				'grid-row': `${piece.y + 1} / span 1`
 			}
+		},
+		requestAIMove() {
+			this.game.requestAiMove();
 		}
 	}
 };

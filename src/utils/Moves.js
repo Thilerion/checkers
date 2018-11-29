@@ -73,11 +73,16 @@ export default class Moves {
 	isValidMove(x0, y0, x1, y1) {
 		let pieceMove = this.movesForPiece(x0, y0);
 
-		console.log({x0, y0, x1, y1}, pieceMove);
+		console.log({ x0, y0, x1, y1 }, pieceMove);
+		
+		if (!pieceMove) return false;
 
-		return !!pieceMove && !!pieceMove.find(move => {
+		let foundMoveInPath = pieceMove.find(move => {
 			return move[move.length - 1].x === x1 && move[move.length - 1].y === y1;
 		})
+
+		console.log(JSON.parse(JSON.stringify(foundMoveInPath)));
+		return !!foundMoveInPath;
 	}
 	
 

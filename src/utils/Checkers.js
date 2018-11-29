@@ -34,15 +34,11 @@ export default class Checkers {
 	initTurn() {
 		this.moves.findValidMoves(this.gameState.create2dArray(), this.gameState.currentPlayer);
 
-		console.warn({ gameOver: this.gameState.isGameOver() });
+		this.gameState.isGameOver();
 
 		if (this.gameState.gameOver) return;
 
-		if (this.currentPlayerIsAI) {
-			return this.requestAiMove();
-		} else {
-			return this;
-		}
+		return this;
 	}
 
 	currentPlayerClass() {
@@ -51,16 +47,14 @@ export default class Checkers {
 	}
 
 	currentPlayerIsAI() {
-		return !this.currentPlayerClass.isHuman;
+		return !this.currentPlayerClass().isHuman;
 	}
 
 	requestAiMove() {
 		let player = this.currentPlayerClass();
-
 		player.setValidMoves(this.moves.validMoves);
-		setTimeout(() => {
-			player.makeMove();
-		}, 1000);
+
+		player.makeMove();
 		return this;
 	}
 
@@ -71,6 +65,7 @@ export default class Checkers {
 		}
 
 		let path = this.moves.getMovePath(x0, y0, x1, y1);
+		console.log(path);
 		this.gameState._doMove(x0, y0, path);
 
 		return this.initTurn();

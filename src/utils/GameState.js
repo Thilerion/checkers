@@ -134,7 +134,9 @@ export default class GameState {
 		});
 
 		this.pieces.forEach(piece => {
-			board[piece.y][piece.x] = ` ${piece.toString()} |`;
+			if (piece.alive) {
+				board[piece.y][piece.x] = ` ${piece.toString()} |`;
+			}			
 		})
 
 		return [
@@ -170,7 +172,7 @@ export default class GameState {
 			uid,
 			end: moves[moves.length - 1],
 			captures: capturedPieces.map(capturedPiece => {
-				console.log(capturedPiece);
+				console.log({capturedPiece});
 				const {x, y, typeId, uid} = capturedPiece;
 				return {x, y, typeId, uid};
 			})
@@ -180,13 +182,17 @@ export default class GameState {
 	}
 
 	_findPiece(props) {
-		return this.pieces.find(piece => {
+		let piecesFound = this.pieces.filter(piece => {
 			for (let prop in props) {
 				let val = props[prop];
 				if (piece[prop] !== val) return false;
 			}
 			return true;
 		})
+
+		if (piecesFound.length > 1) debugger;
+
+		return piecesFound[0];
 	}
 
 	_processMove(x0, y0, path) {
@@ -198,7 +204,7 @@ export default class GameState {
 		
 		path.forEach((move, i) => {
 			if (move.captured) {
-				let capturedPiece = this._findPiece({x: move.captured.x, y: move.captured.y, typeId: move.captured.type});
+				let capturedPiece = this._findPiece({x: move.captured.x, y: move.captured.y, typeId: move.captured.type, alive: true});
 				capturedPieces.push(capturedPiece);
 			}
 			moves.push({
@@ -217,7 +223,13 @@ export default class GameState {
 			console.error("Can't make a move when the game is over!");
 		}
 		
-		const {piece, start, moves, wasCrowned, capturedPieces} = this._processMove(x0, y0, path);
+		const { piece, start, moves, wasCrowned, capturedPieces } = this._processMove(x0, y0, path);
+		
+		const piece0BeforeMove = {
+			pieceX: piece.x,
+			pieceY: piece.y,
+			isAlive: piece.alive
+		};
 
 		const end = moves[moves.length - 1];
 		piece.move(end.x, end.y);
@@ -237,6 +249,13 @@ export default class GameState {
 		} else {
 			this._increaseNoCaptureCounter();
 		}
+
+		const piece1AfterMove = {
+			pieceX: piece.x,
+			pieceY: piece.y,
+			isAlive: piece.alive
+		};
+		console.log({ piece0BeforeMove, piece1AfterMove });
 
 		return this.nextTurn();
 	}
