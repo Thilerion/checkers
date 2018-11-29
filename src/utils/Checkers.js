@@ -13,8 +13,8 @@ export default class Checkers {
 		this.flyingKings = options.flyingKings;
 		this.autoDrawAfterNoCaptures = options.autoDrawAfterNoCaptures;
 
-		this.playerWhite = new WhiteClass(PLAYER_WHITE, this.makeMove.bind(this));
-		this.playerBlack = new BlackClass(PLAYER_BLACK, this.makeMove.bind(this));
+		this.playerWhite = new WhiteClass(PLAYER_WHITE, this.makeSingleMove.bind(this));
+		this.playerBlack = new BlackClass(PLAYER_BLACK, this.makeSingleMove.bind(this));
 
 		this.moves = new Moves(options);
 		this.gameState = new GameState(

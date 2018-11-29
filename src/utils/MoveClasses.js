@@ -132,6 +132,10 @@ export class ValidMoves {
 		this.paths = [...movePaths];
 	}
 
+	hasMoves() {
+		return this.paths.length > 0;
+	}
+
 	pieceCanMove(x, y) {
 		return this.paths.some(movePath => movePath.startsWithPiece(x, y));
 	}

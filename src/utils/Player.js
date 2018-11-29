@@ -20,15 +20,14 @@ export class RandomAI extends PlayerInterface {
 	makeMove() {
 		console.log("Now requesting RandomAI to make a move.");
 
-		if (this.validMoves.length <= 0) return;
+		if (!this.validMoves.hasMoves()) return;
 
-		const validMovePaths = this.validMoves.paths;
-		const path = validMovePaths[Math.floor(Math.random() * validMovePaths.length)];
+		const paths = this.validMoves.paths;
+		const path = paths[Math.floor(Math.random() * paths.length)];
 
-		const from = path.startingPieceLocation();
-		const to = path.getDestination();
+		console.log(path);
 
-		this.sendMove(from.x, from.y, to.x, to.y);
+		this.sendMove(path.getNextMove());
 	}
 }
 
