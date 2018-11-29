@@ -62,6 +62,56 @@ class MovePath {
 	}
 }
 
+class ValidMoves {
+	
+	constructor(movePaths) {
+		/*
+		Example of paths:
+		[Array of MovePaths:
+			moves: [Array of Moves within path:
+				{Move Object:
+					from,
+					captured,
+					typeId,
+					to
+				}
+			],
+			moves: [Array of Moves in Path],
+			moves: [Array of Moves in Path],
+			...
+		]
+		*/
+		this.paths = [...movePaths];
+	}
+
+	pieceCanMove(x, y) {
+		this.paths.forEach(movePath => {
+			const pathStart = movePath.startingPieceLocation();
+			if (x === pathStart.x && y === pathStart.y) return true;
+		})
+		return false;
+	}
+
+	getMovePathsForPiece(x, y) {
+		return this.paths.filter(movePath => {
+			const pathStart = movePath.startingPieceLocation();
+			if (x === pathStart.x && y === pathStart.y) return true;
+		})
+	}
+
+	mustCapture() {
+		return this.paths.some(path => path.mustCapture());
+	}
+
+	isValidInitialMove() {
+
+	}
+
+	isValidFullMove() {
+
+	}
+}
+
 export default class Moves {
 	constructor(options) {
 		const { size, captureBack, flyingKings } = options;
@@ -266,7 +316,7 @@ export default class Moves {
 
 			if (!nextSquare && dir.forward) {
 				// No piece on that square, and it is the right directions, so add to array
-				moves.push(new MovePath(new Move(x, y).setDestination(x1, y1).setTypeId(this.board[y][x])));
+				moves.push(new MovePath([new Move(x, y).setDestination(x1, y1).setTypeId(this.board[y][x])]));
 
 				if (isKing && dir.kingDiagonalDirs.length > 0) {
 					for (let i = 0; i < dir.kingDiagonalDirs.length; i++) {
@@ -277,7 +327,7 @@ export default class Moves {
 						
 						if (nextSquare) break;
 
-						moves.push(new MovePath(new Move(x, y).setDestination(x1, y1).setTypeId(this.board[y][x])));
+						moves.push(new MovePath([new Move(x, y).setDestination(x1, y1).setTypeId(this.board[y][x])]));
 					}
 				}
 			}
@@ -452,34 +502,7 @@ export default class Moves {
 			return allPaths;
 		}, [])
 
-		this.validMoves = movePaths;
-		return this;
-	}
-
-	_createValidMovesOLD(onlyLongest = true) {
-		let moves = [];
-		let mustHit = false;
-
-		for (let y = 0; y < this.size; y++) {
-			for (let x = 0; x < this.size; x++) {
-				if (this._isPieceFromPlayer(x, y)) {
-					let pieceOptions = this._getPieceOptions(x, y, onlyLongest);
-					if (!pieceOptions) continue;
-					moves.push(pieceOptions);
-					if (pieceOptions.mustHit && !mustHit) {
-						mustHit = true;
-					}
-				}
-			}
-		}
-
-		// filter out non-must hits if a mustHit was found
-		if (mustHit) {
-			moves = moves.filter(val => val.mustHit);
-		}
-
-		this.validMoves = moves;
-		
+		this.validMoves = new ValidMoves(movePaths);
 		return this;
 	}
 }
