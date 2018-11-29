@@ -57,12 +57,34 @@ export class MovePath {
 		return { ...this.moves[0].from };
 	}
 
+	startsWithPiece(x, y) {
+		return this.moves[0].from.x === x && this.moves[0].from.y === y;
+	}
+
+	endsAtLocation(x, y) {
+		const dest = this.getDestination();
+		return dest.x === x && dest.y === y;
+	}
+
 	startingPieceTypeId() {
 		return this.moves[0].typeId;
 	}
 
 	getDestination() {
 		return { ...this.moves[this.moves.length - 1].to };
+	}
+
+	nextSquare() {
+		if (this.moves.length > 0) {
+			return { ...this.moves[0].to };
+		} else {
+			throw new Error("Can't check next square for a path without moves!");
+		}
+	}
+
+	locationIsNextLocation(x, y) {
+		const next = this.nextSquare();
+		return next.x === x && next.y === y;
 	}
 
 	getCaptures() {
@@ -96,21 +118,26 @@ export class ValidMoves {
 	}
 
 	pieceCanMove(x, y) {
-		this.paths.forEach(movePath => {
-			const pathStart = movePath.startingPieceLocation();
-			if (x === pathStart.x && y === pathStart.y) return true;
-		})
-		return false;
+		return this.paths.some(movePath => movePath.startsWithPiece(x, y));
 	}
 
 	getMovePathsForPiece(x, y) {
+		return this.paths.filter(movePath => movePath.startsWithPiece(x, y));
+	}
+
+	getPathsWithOriginAndEnd({x: x0, y: y0}, {x: x1, y: y1}) {
 		return this.paths.filter(movePath => {
-			const pathStart = movePath.startingPieceLocation();
-			if (x === pathStart.x && y === pathStart.y) return true;
+			return movePath.startsWithPiece(x0, y0) && movePath.endsAtLocation(x1, y1);
 		})
 	}
 
-	mustCapture() {
+	getPathsWithOriginAndNext({ x: x0, y: y0 }, { x: x1, y: y1 }) {
+		return this.paths.filter(movePath => {
+			return movePath.startsWithPiece(x0, y0) && movePath.locationIsNextLocation(x1, y1);
+		})
+	}
+
+	playerMustCapture() {
 		return this.paths.some(path => path.mustCapture());
 	}
 
