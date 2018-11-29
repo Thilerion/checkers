@@ -95,8 +95,10 @@ export default class Checkers {
 		// Check if was last move, else reduce all paths in ValidPaths with the last made move
 		// if was last move, do this.initTurn()
 
-		// gameState.doMove()
 		let isFinished = this.moves.validMoves.reducePathsWithMove(move).finished;
+		
+		this.gameState._doSingleMove(move, isFinished);
+
 		if (isFinished) {
 			return this.initTurn();
 		} else {

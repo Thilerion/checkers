@@ -1,5 +1,6 @@
 import { NO_PIECE, PIECES, PLAYER_BLACK, PLAYER_WHITE, PIECE_KING, PIECE_MAN, GET_PIECE_PLAYER, GET_PIECE_TYPE, TIE } from './constants.js';
 import Piece from './Piece.js';
+import { History, HistoryItem } from './History.js';
 
 export default class GameState {
 	constructor(options, moves) {
@@ -7,7 +8,7 @@ export default class GameState {
 
 		this.size = size;
 		this.pieces = [];
-		this.history = [];
+		this.history = new History();
 
 		this.startingPlayer = startingPlayer;
 		this.currentPlayer = startingPlayer;
@@ -217,67 +218,56 @@ export default class GameState {
 		return {piece, start, moves, capturedPieces, wasCrowned};
 	}
 
-	_doMove(x0, y0, path) {
+	_doSingleMove(move, finished) {
 		if (this.gameOver) {
 			console.error("Can't make a move when the game is over!");
 		}
-		
-		const { piece, start, moves, wasCrowned, capturedPieces } = this._processMove(x0, y0, path);
-		
-		const piece0BeforeMove = {
-			pieceX: piece.x,
-			pieceY: piece.y,
-			isAlive: piece.alive
-		};
 
-		const end = moves[moves.length - 1];
-		piece.move(end.x, end.y);
+		const piece = this._findPiece({ x: move.from.x, y: move.from.y, alive: true });
 
-		if (wasCrowned) {
+		this.history.addMove(move, finished, piece.player, piece.uid);
+
+		if (finished && !piece.isKing() && this._shouldCrown(move.to.y)) {
+			this.history.lastItem().setWasCrowned(true);
 			piece.crown();
 		}
 
-		capturedPieces.forEach(captured => {
-			captured.capture();
-		})
+		piece.move(move.to.x, move.to.y);
 
-		this._recordHistory(piece.uid, start, moves, capturedPieces, wasCrowned);
+		if (move.captured != null) {
+			this._findPiece(move.captured).capture();
+		}
 
-		if (capturedPieces.length > 0) {
+		if (finished && move.captured != null) {
 			this._resetNoCaptureCounter();
-		} else {
+		} else if (finished && move.captured == null) {
 			this._increaseNoCaptureCounter();
 		}
 
-		const piece1AfterMove = {
-			pieceX: piece.x,
-			pieceY: piece.y,
-			isAlive: piece.alive
-		};
-		console.log({ piece0BeforeMove, piece1AfterMove });
-
-		return this.nextTurn();
+		if (finished) {
+			return this.nextTurn();
+		} else return this;
 	}
 
 	_undoMove() {
-		const { start, end, captures, uid, wasCrowned } = this.history.pop();
+		const { wasCrowned, uid, initialPos, currentPos, revivePieces, wasFinished } = this.history.undo();
 
-		const piece = this._findPiece({uid});
+		const piece = this._findPiece({ uid, alive: true, x: currentPos.x, y: currentPos.y });
 
-		piece.move(start.x, start.y);
+		piece.move(initialPos.x, initialPos.y);
 
 		if (wasCrowned) {
 			piece.decrown();
 		}
 
-		captures.forEach(capturedPiece => {
-			this._findPiece(capturedPiece).revive();
+		revivePieces.forEach(cap => {
+			this._findPiece({ ...cap, alive: false }).revive();
 		})
 
-		if (captures.length > 0) {
+		if (revivePieces.length > 0) {
 			this._decreaseNoCaptureCounter();
 		}
-		return this.previousTurn();
+		return this.previousTurn(wasFinished);
 	}
 
 	_increaseNoCaptureCounter() {
@@ -303,8 +293,11 @@ export default class GameState {
 		return this;
 	}
 
-	previousTurn() {
-		this.moveNumber--;
+	previousTurn(reduceMoveNumber = true) {
+		if (reduceMoveNumber) {
+			this.moveNumber--;
+		}
+
 		this.currentPlayer = this.currentPlayer === PLAYER_BLACK ? PLAYER_WHITE : PLAYER_BLACK;
 		return this;
 	}
