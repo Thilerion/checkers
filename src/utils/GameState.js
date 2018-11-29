@@ -293,12 +293,12 @@ export default class GameState {
 		return this;
 	}
 
-	previousTurn(reduceMoveNumber = true) {
-		if (reduceMoveNumber) {
+	previousTurn(wasFinished = true) {
+		if (wasFinished) {
 			this.moveNumber--;
+			this.currentPlayer = this.currentPlayer === PLAYER_BLACK ? PLAYER_WHITE : PLAYER_BLACK;
 		}
 
-		this.currentPlayer = this.currentPlayer === PLAYER_BLACK ? PLAYER_WHITE : PLAYER_BLACK;
 		return this;
 	}
 }
