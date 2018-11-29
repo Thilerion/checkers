@@ -8,7 +8,6 @@ export class HistoryItem {
 	}
 
 	addMove(move) {
-		debugger;
 		this.moves.push(move);
 		return this;
 	}
