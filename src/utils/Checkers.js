@@ -120,6 +120,10 @@ export default class Checkers {
 		return this.initTurn();
 	}
 
+	canUnmakeMove() {
+		return this.gameState.history.items.length > 0;
+	}
+
 	unmakeMove() {
 		this.gameState._undoMove();
 

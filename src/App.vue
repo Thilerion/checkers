@@ -23,6 +23,7 @@
 			
 		</div>
 		<button :disabled="!game.currentPlayerIsAI()" @click="requestAIMove">Request AI Move</button>
+		<button :disabled="!game.canUnmakeMove()" @click="undoMove">Undo last move</button>
 	</div>
 </template>
 
@@ -77,6 +78,9 @@ export default {
 		},
 		requestAIMove() {
 			this.game.requestAiMove();
+		},
+		undoMove() {
+			this.game.unmakeMove();
 		}
 	}
 };
