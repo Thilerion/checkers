@@ -24,7 +24,6 @@ export default class GameState {
 
 	_importBoard(pieces) {
 		this.pieces = pieces.map(([x, y, typeId]) => {
-			console.log(x, y, typeId);
 			return new Piece(x, y, typeId);
 		});
 				

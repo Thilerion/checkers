@@ -43,7 +43,17 @@ export default {
 	},
 	data() {
 		return {
-			game: new Checkers(RULES, RandomAI, RandomAI).initGame(),
+			// game: new Checkers(RULES, RandomAI, RandomAI).initGame(),
+			game: new Checkers(RULES, RandomAI, RandomAI).importGame([
+				[0, 7, 1],
+				[1, 6, -1],
+				[1, 4, -1],
+				[1, 2, -1],
+				[6, 7, 1],
+				[5, 6, -1],
+				[5, 4, -1],
+				[5, 2, -1]
+			], PLAYER_WHITE),
 			gridComp: new Grid(RULES.size)
 		}
 	},

@@ -1,5 +1,67 @@
 import { PLAYER_BLACK, PLAYER_WHITE, NO_PIECE, PIECES } from './constants.js';
 
+class Move {
+	constructor(x, y) {
+		this.from = { x, y };
+
+		this.to;
+		this.typeId;
+		this.captured = null;
+	}
+
+	copy() {
+		const copy = new Move(this.from.x, this.from.y)
+			.setTypeId(this.typeId)
+			.setDestination(this.to.x, this.to.y);
+		
+		if (this.captured != null) {
+			copy.setCapture(this.captured.x, this.captured.y, this.captured.typeId);
+		}
+		return copy;
+	}
+
+	setDestination(x, y) {
+		this.to = { x, y };
+		return this;
+	}
+
+	setTypeId(typeId) {
+		if (Object.values(PIECES).includes(typeId)) {
+			this.typeId = typeId;
+			return this;
+		}
+		else throw new Error(`TypeID ${typeId} is not a valid typeId.`);
+	}
+
+	setCapture(x, y, typeId) {
+		this.captured = { x, y, typeId };
+		return this;
+	}
+}
+
+class MovePath {
+	constructor(moves) {
+		this.moves = [...moves];
+	}
+
+	// TODO: could probably just check the first move
+	mustCapture() {
+		return this.moves.some(move => move.captured != null);
+	}
+
+	amount() {
+		return this.moves.length;
+	}
+
+	startingPieceLocation() {
+		return { ...this.moves[0].from };
+	}
+
+	startingPieceTypeId() {
+		return this.moves[0].typeId;
+	}
+}
+
 export default class Moves {
 	constructor(options) {
 		const { size, captureBack, flyingKings } = options;
@@ -120,17 +182,18 @@ export default class Moves {
 		return this._getPiecePlayer(x, y) === this.player;
 	}
 
-	_simulateMove(x0, y0, x1, y1, captured = null) {
-		let move = { x0, y0, x1, y1 };
+	_simulateMove(move) {
+		if (!(move instanceof Move)) {
+			throw new Error("Simulate move needs a move object!");
+		}
+		const { captured, from, to, typeId } = move;
+
 		if (captured != null) {
-			move.captured = captured;
-			move.captured.type = this.board[captured.y][captured.x];
 			this.board[captured.y][captured.x] = NO_PIECE;
 		}
 
-		let movedPiece = this.board[y0][x0];
-		this.board[y0][x0] = NO_PIECE;
-		this.board[y1][x1] = movedPiece;
+		this.board[from.y][from.x] = NO_PIECE;
+		this.board[to.y][to.x] = typeId;
 
 		this.hitHistory.push(move);
 		return this;
@@ -138,14 +201,14 @@ export default class Moves {
 
 	_undoMove() {
 		this.hitHistory = this.hitHistory.slice();
-		let move = this.hitHistory.pop();
 
-		let movedPiece = this.board[move.y1][move.x1];
-		this.board[move.y1][move.x1] = NO_PIECE;
-		this.board[move.y0][move.x0] = movedPiece;
+		const {captured, from, to, typeId} = this.hitHistory.pop();
 
-		if (!!move.captured) {
-			this.board[move.captured.y][move.captured.x] = move.captured.type;
+		this.board[from.y][from.x] = typeId;
+		this.board[to.y][to.x] = NO_PIECE;
+
+		if (captured != null) {
+			this.board[captured.y][captured.x] = captured.typeId;
 		}
 
 		return this;
@@ -203,7 +266,7 @@ export default class Moves {
 
 			if (!nextSquare && dir.forward) {
 				// No piece on that square, and it is the right directions, so add to array
-				moves.push({ x: x1, y: y1 });
+				moves.push(new MovePath(new Move(x, y).setDestination(x1, y1).setTypeId(this.board[y][x])));
 
 				if (isKing && dir.kingDiagonalDirs.length > 0) {
 					for (let i = 0; i < dir.kingDiagonalDirs.length; i++) {
@@ -214,18 +277,18 @@ export default class Moves {
 						
 						if (nextSquare) break;
 
-						moves.push({ x: x1, y: y1 });
+						moves.push(new MovePath(new Move(x, y).setDestination(x1, y1).setTypeId(this.board[y][x])));
 					}
 				}
 			}
 			return moves;
-		}, [])
+		}, []);
 	}
 
 	_getPieceHits(x, y) {
 		const isKing = this._isKing(x, y);
 
-		return this._getValidPieceDirections(x, y).reduce((hits, dir) => {
+		const pieceHits = this._getValidPieceDirections(x, y).reduce((hits, dir) => {
 			// check next square, or all next squares if king, for enemy piece
 			// if yes, check next square, or all next squares if king, for empty piece
 			// add next position, or all next positions if king, to hits array, along with coords of captured piece
@@ -262,7 +325,9 @@ export default class Moves {
 			let y2 = dir.dy + foundEnemyPiece.y;
 
 			if (this._isValidSquare(x2, y2) && this._isEmptySquare(x2, y2)) {
-				hits.push({ x: x2, y: y2, captured: { x: foundEnemyPiece.x, y: foundEnemyPiece.y } });
+				const m = new Move(x, y).setTypeId(this.board[y][x]).setDestination(x2, y2).setCapture(foundEnemyPiece.x, foundEnemyPiece.y, this.board[foundEnemyPiece.y][foundEnemyPiece.x]);
+				// hits.push({ x: x2, y: y2, captured: { x: foundEnemyPiece.x, y: foundEnemyPiece.y } });
+				hits.push(m);
 			}
 
 			if (this._isValidSquare(x2, y2) && this._isEmptySquare(x2, y2) && isKing) {
@@ -273,7 +338,9 @@ export default class Moves {
 					x2 = dir.kingDiagonalDirs[j].dx + x;
 					y2 = dir.kingDiagonalDirs[j].dy + y;
 					if (this._isValidSquare(x2, y2) && this._isEmptySquare(x2, y2)) {
-						hits.push({ x: x2, y: y2, captured: { x: foundEnemyPiece.x, y: foundEnemyPiece.y } });
+						const m = new Move(x, y).setTypeId(this.board[y][x]).setDestination(x2, y2).setCapture(foundEnemyPiece.x, foundEnemyPiece.y, this.board[foundEnemyPiece.y][foundEnemyPiece.x]);
+						// hits.push({ x: x2, y: y2, captured: { x: foundEnemyPiece.x, y: foundEnemyPiece.y } });
+						hits.push(m);
 					} else {
 						break;
 					}
@@ -281,72 +348,68 @@ export default class Moves {
 			}
 			return hits;
 		}, [])
+
+		// debugger;
+		return pieceHits;
 	}
 
 	_getPieceOptions(x, y, onlyLongest = true) {
-		let hits = this._getPieceRecursiveHits(x, y);
+		let piecePaths = this._getPieceRecursiveHits(x, y);
 
 		let options = [];
 		let mustHit = false;
 		let longest = 0;
 
-		if (hits.length <= 0) {
-			let moves = this._getPieceMoves(x, y);
-			if (moves && moves.length > 0) {
+		if (piecePaths.length <= 0) {
+			let movePaths = this._getPieceMoves(x, y);
+			if (movePaths && movePaths.length > 0) {
 				longest = 1;
-				options.push(...moves.map(move => {
-					return [{ ...move, captured: null }];
-				}));
+				options.push(...movePaths);
 			} else {
 				return;
 			}
 		} else {
 			mustHit = true;
-			longest = hits.reduce((max, val) => {
-				return Math.max(max, val.length);
+			longest = piecePaths.reduce((max, val) => {
+				console.log(val.amount());
+				return Math.max(max, val.amount());
 			}, 0)
 			
 			if (!onlyLongest) {
-				options.push(...hits);
+				options.push(...piecePaths);
 			} else if (onlyLongest) {
-				hits.forEach(h => {
-					if (h.length >= longest) options.push(h);
+				piecePaths.forEach(path => {
+					if (path.amount() >= longest) options.push(path);
 				})
 			}
 		}
-		return { piece: { x, y }, mustHit, moves: options, longest };
+		return { piece: { x, y }, mustHit, paths: options, longest };
 	}
 
 	_getPieceRecursiveHits(x, y) {
 		let paths = [];
 
 		const getNextHits = (x, y) => {
-			let nextHits = this._getPieceHits(x, y).map(h => {
-				return { x: h.x, y: h.y, captured: h.captured };
-			});
+			let nextHits = this._getPieceHits(x, y);
 
 			if (nextHits.length <= 0) {
-				let curPath = JSON.parse(JSON.stringify(this.hitHistory)).map(path => {
-					return { x: path.x1, y: path.y1, captured: path.captured };
-				})
-				paths.push(curPath);
+				let curPath = this.hitHistory.slice().map(move => move.copy());
+				paths.push(new MovePath(curPath));
 				return;
 			}
 
 			nextHits.forEach(nextHit => {
-				this._simulateMove(x, y, nextHit.x, nextHit.y, nextHit.captured);
-				getNextHits(nextHit.x, nextHit.y);
+				this._simulateMove(nextHit);
+				getNextHits(nextHit.to.x, nextHit.to.y);
 				this._undoMove();
 			})
 		}
 
-		let initialHits = this._getPieceHits(x, y).map(h => {
-			return { x: h.x, y: h.y, captured: h.captured };
-		});
+		let initialHits = this._getPieceHits(x, y);
 
 		initialHits.forEach(initHit => {
-			this._simulateMove(x, y, initHit.x, initHit.y, initHit.captured);
-			getNextHits(initHit.x, initHit.y);
+			this._simulateMove(initHit);
+			getNextHits(initHit.to.x, initHit.to.y);
 			this._undoMove();
 		})
 
@@ -354,6 +417,46 @@ export default class Moves {
 	}
 
 	_createValidMoves(onlyLongest = true) {
+		const allPiecePaths = [];
+		let mustHit = false;
+		let longest = 0;
+
+		for (let y = 0; y < this.size; y++) {
+			for (let x = 0; x < this.size; x++) {
+				if (!this._isPieceFromPlayer(x, y)) continue;
+
+				const piecePaths = this._getPieceOptions(x, y, onlyLongest);
+
+				if (piecePaths != null) {
+					allPiecePaths.push(piecePaths);
+					
+					if (!mustHit && piecePaths.mustHit) mustHit = true;
+					if (piecePaths.longest > longest) longest = piecePaths.longest;
+				}
+			}
+		}
+		const filtered = allPiecePaths.filter(piece => {
+			let isLongEnough = true;
+			let isHitIfMustHit = true;
+			if (onlyLongest) {
+				isLongEnough = piece.longest >= longest;
+			}
+			if (mustHit) {
+				isHitIfMustHit = !!piece.mustHit;
+			}
+			return isLongEnough && isHitIfMustHit;
+		});
+
+		const movePaths = filtered.reduce((allPaths, piece) => {
+			allPaths.push(...piece.paths);
+			return allPaths;
+		}, [])
+
+		this.validMoves = movePaths;
+		return this;
+	}
+
+	_createValidMovesOLD(onlyLongest = true) {
 		let moves = [];
 		let mustHit = false;
 
