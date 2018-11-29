@@ -267,6 +267,12 @@ export default class GameState {
 		if (revivePieces.length > 0) {
 			this._decreaseNoCaptureCounter();
 		}
+
+		if (this.gameOver) {
+			this.gameOver = false;
+			this.winner = null;
+		}
+
 		return this.previousTurn(wasFinished);
 	}
 

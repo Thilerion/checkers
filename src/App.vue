@@ -22,7 +22,7 @@
 			</transition-group>
 			
 		</div>
-		<button :disabled="!game.currentPlayerIsAI()" @click="requestAIMove">Request AI Move</button>
+		<button :disabled="!game.currentPlayerIsAI() || game.gameState.gameOver" @click="requestAIMove">Request AI Move</button>
 		<button :disabled="!game.canUnmakeMove()" @click="undoMove">Undo last move</button>
 	</div>
 </template>
