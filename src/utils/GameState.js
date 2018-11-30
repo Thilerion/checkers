@@ -149,36 +149,9 @@ export default class GameState {
 		].join('\n');
 	}
 
-	addPiece(x, y, typeId) {
-		this.pieces.push(this._createPiece(x, y, typeId));
-		return this;
-	}
-
-	removePiece(x, y) {
-		let index = this.pieces.findIndex(piece => piece.x === x && piece.y === y);
-		this.pieces.splice(index, 1);
-		return this;
-	}
-
 	_shouldCrown(y) {
 		return (this.currentPlayer === PLAYER_BLACK && y === this.size - 1) ||
 			(this.currentPlayer === PLAYER_WHITE && y === 0);
-	}
-
-	_recordHistory(uid, start, moves, capturedPieces, wasCrowned) {
-		const historyItem = {
-			start,
-			wasCrowned,
-			uid,
-			end: moves[moves.length - 1],
-			captures: capturedPieces.map(capturedPiece => {
-				console.log({capturedPiece});
-				const {x, y, typeId, uid} = capturedPiece;
-				return {x, y, typeId, uid};
-			})
-		};
-
-		this.history.push(historyItem);
 	}
 
 	_findPiece(props) {
@@ -195,28 +168,6 @@ export default class GameState {
 		return piecesFound[0];
 	}
 
-	_processMove(x0, y0, path) {
-		const piece = this._findPiece({x: x0, y: y0, alive: true});
-		const start = {x: x0, y: y0, typeId: piece.typeId};
-		const moves = [];
-		const capturedPieces = [];
-		let wasCrowned = false;
-		
-		path.forEach((move, i) => {
-			if (move.captured) {
-				let capturedPiece = this._findPiece({x: move.captured.x, y: move.captured.y, typeId: move.captured.type, alive: true});
-				capturedPieces.push(capturedPiece);
-			}
-			moves.push({
-				x: move.x,
-				y: move.y
-			});
-			if (i === path.length - 1 && !piece.isKing() && this._shouldCrown(move.y)) {
-				wasCrowned = true;
-			}
-		})
-		return {piece, start, moves, capturedPieces, wasCrowned};
-	}
 
 	_doSingleMove(move, finished) {
 		if (this.gameOver) {

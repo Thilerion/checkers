@@ -73,15 +73,11 @@ export default class Checkers {
 	}
 
 	makeMoveWithPath(path) {
+		// TODO
 		if (!this._validatePath(path)) {
 			console.warn("Not a valid path!");
 			return;
 		}
-		
-		// Do entire move in one go. Might be useful?
-
-		// gameState.doMovesInPath()
-		// return this.initTurn()
 	}
 
 	makeSingleMove(move) {
@@ -106,19 +102,6 @@ export default class Checkers {
 		}
 	}
 
-	makeMove(x0, y0, x1, y1) {
-		if (!this.moves.isValidMove(x0, y0, x1, y1)) {
-			console.warn("Not a valid move!");
-			return;
-		}
-
-		let path = this.moves.getMovePath(x0, y0, x1, y1);
-		console.log(path);
-		this.gameState._doMove(x0, y0, path);
-
-		return this.initTurn();
-	}
-
 	canUnmakeMove() {
 		return this.gameState.history.items.length > 0;
 	}
@@ -141,6 +124,3 @@ export default class Checkers {
 		return this.initTurn();
 	}
 }
-
-// let checkers = new Checkers(RULES).initGame(); //?.
-// checkers.gameState.ascii(); //?

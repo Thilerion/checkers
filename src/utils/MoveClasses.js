@@ -45,11 +45,6 @@ export class MovePath {
 		this.moves = [...moves];
 	}
 
-	// TODO: could probably just check the first move
-	mustCapture() {
-		return this.moves.some(move => move.captured != null);
-	}
-
 	amount() {
 		return this.moves.length;
 	}
